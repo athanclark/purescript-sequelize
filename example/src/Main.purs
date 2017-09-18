@@ -1,7 +1,7 @@
 module Main where
 
 import Data.URI (Host (..))
-import Database.Sequelize (sequelize, Dialect (Postgres), authenticate, sync, define, sqlSTRING, sqlINTEGER, build, save, makeField, get, findOne)
+import Database.Sequelize (sequelize, Dialect (Postgres), authenticate, sync, define, sqlSTRING, sqlINTEGER, build, save, makeField, get, findOne, hasMany, create)
 
 import Prelude
 import Data.Maybe (Maybe (..))
@@ -52,13 +52,13 @@ main = do
       }
     foo'sBazs <- foo `hasMany` baz
     sync sql
-    b <- liftEff $ create baz {}
+    b <- create baz {}
     mI <- findOne foo {where: {bar: 1}}
     case mI of
       Nothing -> do
         liftEff $ log "wut?!"
         pure "wut"
       Just i -> do
-        foo'sBazs.set [b]
+        foo'sBazs.set i [b]
         x <- liftEff $ get i {plain: true}
         pure (x :: Fields).foo

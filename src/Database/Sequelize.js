@@ -20,17 +20,6 @@ exports.syncImpl = function syncImpl (onError,onSuccess,sequelize) {
   sequelize.sync().then(onSuccess).catch(onError);
 };
 
-exports.sqlSTRING = Sequelize.STRING;
-exports.sqlTEXT = Sequelize.TEXT;
-exports.sqlBOOLEAN = Sequelize.BOOLEAN;
-exports.sqlDATE = Sequelize.DATE;
-exports.sqlINTEGER = Sequelize.INTEGER;
-exports.sqlFLOAT = Sequelize.FLOAT;
-exports.sqlDOUBLE = Sequelize.DOUBLE;
-exports.sqlNOW = Sequelize.NOW;
-
-exports.sqlPgINITIALLYIMMEDIATE = Sequelize.Deferrable.INITIALLY_IMMEDIATE;
-
 exports.defineImpl = function defineImpl (sequelize,modelName,fields) {
   return sequelize.define(modelName,fields);
 };

@@ -2,17 +2,15 @@ module Database.Sequelize
   ( SEQUELIZE, Sequelize
   , SequelizeParams, Dialect (..)
   , sequelize, authenticate, sync
-  , SequelizeType, sqlSTRING, sqlTEXT, sqlBOOLEAN, sqlDATE, sqlINTEGER, sqlFLOAT, sqlDOUBLE
-  , SequelizeValue, sqlNOW
-  , DefineFieldParams, DefineFieldParamsO, ReferencesParamsO
-  , References, ReferencesParamsO, ReferencesParams, makeReferences
-  , SequelizeDefer, sqlPgINITIALLYIMMEDIATE
-  , Field, makeField
-  , Model (..), ModelImpl, define, hasOne, belongsTo, hasMany, belongsToMany
+  , Model (..), define, hasOne, belongsTo, hasMany, belongsToMany
   , Instance, findById, findOne, findAll
   , UnsavedInstance, build, save
   , create, bulkCreate, update, destroy, get
+  , module Fields
   ) where
+
+import Database.Sequelize.Fields (ModelDefinition, ModelImpl)
+import Database.Sequelize.Fields as Fields
 
 import Prelude
 import Data.Record.Class (class Subrow)
@@ -110,99 +108,44 @@ sync :: forall eff. Sequelize -> Aff (sequelize :: SEQUELIZE | eff) Unit
 sync sql = makeAff \onError onSuccess -> runEffFn3 syncImpl (mkEffFn1 onError) (onSuccess unit) sql
 
 
-foreign import data SequelizeType :: Type -> Type
 
-foreign import sqlSTRING :: SequelizeType String
-foreign import sqlTEXT :: SequelizeType String
-foreign import sqlBOOLEAN :: SequelizeType Boolean
-foreign import sqlDATE :: SequelizeType (SequelizeValue Date)
-foreign import sqlINTEGER :: SequelizeType Int
-foreign import sqlFLOAT :: SequelizeType Number
-foreign import sqlDOUBLE :: SequelizeType Number
-
-foreign import data SequelizeValue :: Type -> Type
-
-foreign import sqlNOW :: SequelizeValue Date
-
-
-type DefineFieldParams value o =
-  { "type" :: SequelizeType value
-  | o }
-
-foreign import data SequelizeDefer :: Type
-
-foreign import sqlPgINITIALLYIMMEDIATE :: SequelizeDefer
-
-type ReferencesParamsO =
-  ( deferrable :: SequelizeDefer
-  )
-
-type ReferencesParams o =
-  { model :: ModelImpl
-  , key :: String
-  | o }
-
-foreign import data References :: Type
-
-makeReferences :: forall o
-                . Subrow o ReferencesParamsO
-               => ReferencesParams o -> References
-makeReferences = unsafeCoerce
-
-type DefineFieldParamsO value =
-  ( allowNull :: Boolean
-  , defaultValue :: value
-  , unique :: String
-  , primaryKey :: Boolean
-  , autoIncrement :: Boolean
-  , field :: String
-  , references :: References
-  )
-
-foreign import data Field :: Type
-
-makeField :: forall o value
-           . Subrow o (DefineFieldParamsO value)
-          => DefineFieldParams value o -> Field
-makeField = unsafeCoerce
-
-foreign import data ModelImpl :: Type
-
-foreign import defineImpl :: forall eff fields
+foreign import defineImpl :: forall eff fields constructor
                            . EffFn3 (sequelize :: SEQUELIZE | eff)
-                               Sequelize String { | fields } ModelImpl
+                               Sequelize String (ModelDefinition fields constructor) (ModelImpl fields constructor)
 
-data Model = Model String ModelImpl
+data Model fields constructor = Model String (ModelImpl fields constructor)
 
 
-define :: forall eff fields
+define :: forall eff fields constructor
         . Sequelize
        -> String
-       -> { | fields }
-       -> Eff (sequelize :: SEQUELIZE | eff) Model
+       -> ModelDefinition fields constructor
+       -> Eff (sequelize :: SEQUELIZE | eff) (Model fields constructor)
 define s n fs = Model n <$> runEffFn3 defineImpl s n fs
 
 
-foreign import belongsToImpl :: forall eff
+foreign import belongsToImpl :: forall eff childFields childConstructor parentFields parentConstructor
                               . EffFn3 (sequelize :: SEQUELIZE | eff)
-                                  String ModelImpl ModelImpl
+                                  String
+                                  (ModelImpl childFields childConstructor)
+                                  (ModelImpl parentFields parentConstructor)
                                     { get :: EffFn3 (sequelize :: SEQUELIZE | eff)
                                                (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
-                                               (EffFn1 (sequelize :: SEQUELIZE | eff) (Nullable Instance) Unit)
-                                               Instance
+                                               (EffFn1 (sequelize :: SEQUELIZE | eff) (Nullable (Instance childFields)) Unit)
+                                               (Instance parentFields)
                                                Unit
                                     , set :: EffFn4 (sequelize :: SEQUELIZE | eff)
                                                (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                                (Eff (sequelize :: SEQUELIZE | eff) Unit)
-                                               Instance
-                                               (Nullable Instance) Unit
+                                               (Instance parentFields)
+                                               (Nullable (Instance childFields)) Unit
                                     }
 
-belongsTo :: forall eff
-           . Model -> Model
+belongsTo :: forall eff childFields childConstructor parentFields parentConstructor
+           . Model childFields childConstructor -> Model parentFields parentConstructor
           -> Aff (sequelize :: SEQUELIZE | eff)
-               { get :: Instance -> Aff (sequelize :: SEQUELIZE | eff) (Maybe Instance)
-               , set :: Instance -> Maybe Instance -> Aff (sequelize :: SEQUELIZE | eff) Unit
+               { get :: Instance parentFields -> Aff (sequelize :: SEQUELIZE | eff) (Maybe (Instance childFields))
+               , set :: Instance parentFields -> Maybe (Instance childFields) -> Aff (sequelize :: SEQUELIZE | eff) Unit
                }
 belongsTo (Model childName childM) (Model _ parentM) = do
   {get,set} <- liftEff $ runEffFn3 belongsToImpl childName childM parentM
@@ -212,26 +155,28 @@ belongsTo (Model childName childM) (Model _ parentM) = do
     }
 
 
-foreign import hasOneImpl :: forall eff
+foreign import hasOneImpl :: forall eff childFields childConstructor parentFields parentConstructor
                            . EffFn3 (sequelize :: SEQUELIZE | eff)
-                               ModelImpl ModelImpl String
+                               (ModelImpl parentFields parentConstructor)
+                               (ModelImpl childFields childConstructor) String
                                  { get :: EffFn3 (sequelize :: SEQUELIZE | eff)
                                             (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
-                                            (EffFn1 (sequelize :: SEQUELIZE | eff) (Nullable Instance) Unit)
-                                            Instance
+                                            (EffFn1 (sequelize :: SEQUELIZE | eff) (Nullable (Instance childFields)) Unit)
+                                            (Instance parentFields)
                                             Unit
                                  , set :: EffFn4 (sequelize :: SEQUELIZE | eff)
                                             (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                             (Eff (sequelize :: SEQUELIZE | eff) Unit)
-                                            Instance
-                                            (Nullable Instance) Unit
+                                            (Instance parentFields)
+                                            (Nullable (Instance childFields)) Unit
                                  }
 
-hasOne :: forall eff
-        . Model -> Model
+hasOne :: forall eff childFields childConstructor parentFields parentConstructor
+        . Model parentFields parentConstructor
+       -> Model childFields childConstructor
        -> Aff (sequelize :: SEQUELIZE | eff)
-            { get :: Instance -> Aff (sequelize :: SEQUELIZE | eff) (Maybe Instance)
-            , set :: Instance -> Maybe Instance -> Aff (sequelize :: SEQUELIZE | eff) Unit
+            { get :: Instance parentFields -> Aff (sequelize :: SEQUELIZE | eff) (Maybe (Instance childFields))
+            , set :: Instance parentFields -> Maybe (Instance childFields) -> Aff (sequelize :: SEQUELIZE | eff) Unit
             }
 hasOne (Model _ parentM) (Model childName childM) = do
   {get,set} <- liftEff $ runEffFn3 hasOneImpl parentM childM childName
@@ -241,44 +186,45 @@ hasOne (Model _ parentM) (Model childName childM) = do
     }
 
 
-foreign import hasManyImpl :: forall eff
+foreign import hasManyImpl :: forall eff childFields childConstructor parentFields parentConstructor
                             . EffFn3 (sequelize :: SEQUELIZE | eff)
-                                ModelImpl ModelImpl String
+                                (ModelImpl parentFields parentConstructor)
+                                (ModelImpl childFields childConstructor) String
                                   { get :: EffFn3 (sequelize :: SEQUELIZE | eff)
                                              (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
-                                             (EffFn1 (sequelize :: SEQUELIZE | eff) (Array Instance) Unit)
-                                             Instance
+                                             (EffFn1 (sequelize :: SEQUELIZE | eff) (Array (Instance childFields)) Unit)
+                                             (Instance parentFields)
                                              Unit
                                   , set :: EffFn4 (sequelize :: SEQUELIZE | eff)
                                              (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                              (Eff (sequelize :: SEQUELIZE | eff) Unit)
-                                             Instance
-                                             (Array Instance) Unit
+                                             (Instance parentFields)
+                                             (Array (Instance childFields)) Unit
                                   , add :: EffFn4 (sequelize :: SEQUELIZE | eff)
                                              (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                              (Eff (sequelize :: SEQUELIZE | eff) Unit)
-                                             Instance
-                                             (Array Instance) Unit
+                                             (Instance parentFields)
+                                             (Array (Instance childFields)) Unit
                                   , has :: EffFn4 (sequelize :: SEQUELIZE | eff)
                                              (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                              (EffFn1 (sequelize :: SEQUELIZE | eff) Boolean Unit)
-                                             Instance
-                                             (Array Instance) Unit
+                                             (Instance parentFields)
+                                             (Array (Instance childFields)) Unit
                                   , remove :: EffFn4 (sequelize :: SEQUELIZE | eff)
                                              (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                              (Eff (sequelize :: SEQUELIZE | eff) Unit)
-                                             Instance
-                                             (Array Instance) Unit
+                                             (Instance parentFields)
+                                             (Array (Instance childFields)) Unit
                                   }
 
-hasMany :: forall eff
-         . Model -> Model
+hasMany :: forall eff childFields childConstructor parentFields parentConstructor
+         . Model parentFields parentConstructor -> Model childFields childConstructor
         -> Aff (sequelize :: SEQUELIZE | eff)
-             { get :: Instance -> Aff (sequelize :: SEQUELIZE | eff) (Array Instance)
-             , set :: Instance -> Array Instance -> Aff (sequelize :: SEQUELIZE | eff) Unit
-             , add :: Instance -> Array Instance -> Aff (sequelize :: SEQUELIZE | eff) Unit
-             , has :: Instance -> Array Instance -> Aff (sequelize :: SEQUELIZE | eff) Boolean
-             , remove :: Instance -> Array Instance -> Aff (sequelize :: SEQUELIZE | eff) Unit
+             { get :: Instance parentFields -> Aff (sequelize :: SEQUELIZE | eff) (Array (Instance childFields))
+             , set :: Instance parentFields -> Array (Instance childFields) -> Aff (sequelize :: SEQUELIZE | eff) Unit
+             , add :: Instance parentFields -> Array (Instance childFields) -> Aff (sequelize :: SEQUELIZE | eff) Unit
+             , has :: Instance parentFields -> Array (Instance childFields) -> Aff (sequelize :: SEQUELIZE | eff) Boolean
+             , remove :: Instance parentFields -> Array (Instance childFields) -> Aff (sequelize :: SEQUELIZE | eff) Unit
              }
 hasMany (Model _ parentM) (Model childName childM) = do
   {get,set,add,has,remove} <- liftEff $ runEffFn3 hasManyImpl parentM childM childName
@@ -291,44 +237,52 @@ hasMany (Model _ parentM) (Model childName childM) = do
     }
 
 
-foreign import belongsToManyImpl :: forall eff fields
+foreign import belongsToManyImpl :: forall eff fields childFields childConstructor parentFields parentConstructor throughFields throughConstructor
                                   . EffFn4 (sequelize :: SEQUELIZE | eff)
-                                      String ModelImpl ModelImpl { through :: Model }
+                                      String (ModelImpl childFields childConstructor)
+                                      (ModelImpl parentFields parentConstructor)
+                                      { through :: Model throughFields throughConstructor }
                                         { get :: EffFn3 (sequelize :: SEQUELIZE | eff)
                                                    (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
-                                                   (EffFn1 (sequelize :: SEQUELIZE | eff) (Array Instance) Unit)
-                                                   Instance
+                                                   (EffFn1 (sequelize :: SEQUELIZE | eff) (Array (Instance childFields)) Unit)
+                                                   (Instance parentFields)
                                                    Unit
                                         , set :: EffFn5 (sequelize :: SEQUELIZE | eff)
                                                    (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                                    (Eff (sequelize :: SEQUELIZE | eff) Unit)
-                                                   Instance
-                                                   (Array Instance) { through :: { | fields } } Unit
+                                                   (Instance parentFields)
+                                                   (Array (Instance childFields))
+                                                   { through :: { | throughConstructor } }
+                                                   Unit
                                         , add :: EffFn5 (sequelize :: SEQUELIZE | eff)
                                                    (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                                    (Eff (sequelize :: SEQUELIZE | eff) Unit)
-                                                   Instance
-                                                   (Array Instance) { through :: { | fields } } Unit
+                                                   (Instance parentFields)
+                                                   (Array (Instance childFields))
+                                                   { through :: { | throughConstructor } }
+                                                   Unit
                                         , has :: EffFn4 (sequelize :: SEQUELIZE | eff)
                                                    (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                                    (EffFn1 (sequelize :: SEQUELIZE | eff) Boolean Unit)
-                                                   Instance
-                                                   (Array Instance) Unit
+                                                   (Instance parentFields)
+                                                   (Array (Instance childFields)) Unit
                                         , remove :: EffFn4 (sequelize :: SEQUELIZE | eff)
                                                    (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                                    (Eff (sequelize :: SEQUELIZE | eff) Unit)
-                                                   Instance
-                                                   (Array Instance) Unit
+                                                   (Instance parentFields)
+                                                   (Array (Instance childFields)) Unit
                                         }
 
-belongsToMany :: forall eff fields
-               . Model -> Model -> {through :: Model}
+belongsToMany :: forall eff fields childFields childConstructor parentFields parentConstructor throughFields throughConstructor
+               . Model childFields childConstructor
+              -> Model parentFields parentConstructor
+              -> {through :: Model throughFields throughConstructor}
               -> Aff (sequelize :: SEQUELIZE | eff)
-                   { get :: Instance -> Aff (sequelize :: SEQUELIZE | eff) (Array Instance)
-                   , set :: Instance -> Array Instance -> { through :: { | fields } } -> Aff (sequelize :: SEQUELIZE | eff) Unit
-                   , add :: Instance -> Array Instance -> { through :: { | fields } } -> Aff (sequelize :: SEQUELIZE | eff) Unit
-                   , has :: Instance -> Array Instance -> Aff (sequelize :: SEQUELIZE | eff) Boolean
-                   , remove :: Instance -> Array Instance -> Aff (sequelize :: SEQUELIZE | eff) Unit
+                   { get :: Instance parentFields -> Aff (sequelize :: SEQUELIZE | eff) (Array (Instance childFields))
+                   , set :: Instance parentFields -> Array (Instance childFields) -> { through :: { | throughConstructor } } -> Aff (sequelize :: SEQUELIZE | eff) Unit
+                   , add :: Instance parentFields -> Array (Instance childFields) -> { through :: { | throughConstructor } } -> Aff (sequelize :: SEQUELIZE | eff) Unit
+                   , has :: Instance parentFields -> Array (Instance childFields) -> Aff (sequelize :: SEQUELIZE | eff) Boolean
+                   , remove :: Instance parentFields -> Array (Instance childFields) -> Aff (sequelize :: SEQUELIZE | eff) Unit
                    }
 belongsToMany (Model childName childM) (Model _ parentM) through = do
   {get,set,add,has,remove} <- liftEff $ runEffFn4 belongsToManyImpl childName childM parentM through
@@ -341,110 +295,123 @@ belongsToMany (Model childName childM) (Model _ parentM) through = do
     }
 
 
-foreign import data Instance :: Type
+foreign import data Instance :: # Type -> Type
 
-foreign import findByIdImpl :: forall eff
+foreign import findByIdImpl :: forall eff fields constructor
                              . EffFn4 (sequelize :: SEQUELIZE | eff)
                                  (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
-                                 (EffFn1 (sequelize :: SEQUELIZE | eff) (Nullable Instance) Unit)
-                                 ModelImpl Int Unit
+                                 (EffFn1 (sequelize :: SEQUELIZE | eff) (Nullable (Instance fields)) Unit)
+                                 (ModelImpl fields constructor) Int Unit
 
-findById :: forall eff
-          . Model -> Int -> Aff (sequelize :: SEQUELIZE | eff) (Maybe Instance)
+findById :: forall eff fields constructor
+          . Model fields constructor
+         -> Int -> Aff (sequelize :: SEQUELIZE | eff) (Maybe (Instance fields))
 findById (Model _ m) i = makeAff \onError onSuccess -> runEffFn4 findByIdImpl (mkEffFn1 onError) (mkEffFn1 $ onSuccess <<< toMaybe) m i
 
 type FindParams whereFields =
   { where :: { | whereFields }
   }
 
-foreign import findOneImpl :: forall eff whereFields
+foreign import findOneImpl :: forall eff whereFields fields constructor
                             . EffFn4 (sequelize :: SEQUELIZE | eff)
                                 (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
-                                (EffFn1 (sequelize :: SEQUELIZE | eff) (Nullable Instance) Unit)
-                                ModelImpl (FindParams whereFields) Unit
+                                (EffFn1 (sequelize :: SEQUELIZE | eff) (Nullable (Instance fields)) Unit)
+                                (ModelImpl fields constructor) (FindParams whereFields) Unit
 
-findOne :: forall eff whereFields
-         . Model -> FindParams whereFields -> Aff (sequelize :: SEQUELIZE | eff) (Maybe Instance)
+findOne :: forall eff whereFields fields constructor
+         . Model fields constructor
+        -> FindParams whereFields
+        -> Aff (sequelize :: SEQUELIZE | eff) (Maybe (Instance fields))
 findOne (Model _ m) f = makeAff \onError onSuccess -> runEffFn4 findOneImpl (mkEffFn1 onError) (mkEffFn1 $ onSuccess <<< toMaybe) m f
 
-foreign import findAllImpl :: forall eff whereFields
+foreign import findAllImpl :: forall eff whereFields fields constructor
                             . EffFn4 (sequelize :: SEQUELIZE | eff)
                                 (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
-                                (EffFn1 (sequelize :: SEQUELIZE | eff) (Array Instance) Unit)
-                                ModelImpl (FindParams whereFields) Unit
+                                (EffFn1 (sequelize :: SEQUELIZE | eff) (Array (Instance fields)) Unit)
+                                (ModelImpl fields constructor) (FindParams whereFields) Unit
 
-findAll :: forall eff whereFields
-         . Model -> FindParams whereFields -> Aff (sequelize :: SEQUELIZE | eff) (Array Instance)
+findAll :: forall eff whereFields fields constructor
+         . Model fields constructor
+        -> FindParams whereFields
+        -> Aff (sequelize :: SEQUELIZE | eff) (Array (Instance fields))
 findAll (Model _ m) f = makeAff \onError onSuccess -> runEffFn4 findAllImpl (mkEffFn1 onError) (mkEffFn1 onSuccess) m f
 
-foreign import data UnsavedInstance :: Type
+foreign import data UnsavedInstance :: # Type -> Type
 
-foreign import buildImpl :: forall eff fields
+foreign import buildImpl :: forall eff fields constructor
                           . EffFn2 (sequelize :: SEQUELIZE | eff)
-                              ModelImpl { | fields } UnsavedInstance
+                              (ModelImpl fields constructor)
+                              { | constructor }
+                              (UnsavedInstance fields)
 
-build :: forall eff fields
-       . Model -> { | fields } -> Eff (sequelize :: SEQUELIZE | eff) UnsavedInstance
+build :: forall eff fields constructor
+       . Model fields constructor
+      -> { | constructor } -> Eff (sequelize :: SEQUELIZE | eff) (UnsavedInstance fields)
 build (Model _ m) f = runEffFn2 buildImpl m f
 
-foreign import saveImpl :: forall eff
+foreign import saveImpl :: forall eff fields
                          . EffFn3 (sequelize :: SEQUELIZE | eff)
                              (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
-                             (EffFn1 (sequelize :: SEQUELIZE | eff) Instance Unit)
-                             UnsavedInstance Unit
+                             (EffFn1 (sequelize :: SEQUELIZE | eff) (Instance fields) Unit)
+                             (UnsavedInstance fields) Unit
 
-save :: forall eff
-      . UnsavedInstance -> Aff (sequelize :: SEQUELIZE | eff) Instance
+save :: forall eff fields
+      . UnsavedInstance fields -> Aff (sequelize :: SEQUELIZE | eff) (Instance fields)
 save i = makeAff \onError onSuccess -> runEffFn3 saveImpl (mkEffFn1 onError) (mkEffFn1 onSuccess) i
 
-foreign import createImpl :: forall eff fields
+foreign import createImpl :: forall eff fields constructor
                            . EffFn4 (sequelize :: SEQUELIZE | eff)
                                (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
-                               (EffFn1 (sequelize :: SEQUELIZE | eff) Instance Unit)
-                               ModelImpl { | fields } Unit
+                               (EffFn1 (sequelize :: SEQUELIZE | eff) (Instance fields) Unit)
+                               (ModelImpl fields constructor)
+                               { | constructor } Unit
 
-create :: forall eff fields
-        . Model -> { | fields } -> Aff (sequelize :: SEQUELIZE | eff) Instance
+create :: forall eff fields constructor
+        . Model fields constructor
+       -> { | constructor } -> Aff (sequelize :: SEQUELIZE | eff) (Instance fields)
 create (Model _ m) f = makeAff \onError onSuccess -> runEffFn4 createImpl (mkEffFn1 onError) (mkEffFn1 onSuccess) m f
 
-foreign import bulkCreateImpl :: forall eff fields
+foreign import bulkCreateImpl :: forall eff fields constructor
                                . EffFn4 (sequelize :: SEQUELIZE | eff)
                                    (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                    (Eff (sequelize :: SEQUELIZE | eff) Unit)
-                                   ModelImpl (Array { | fields }) Unit
+                                   (ModelImpl fields constructor)
+                                   (Array { | constructor }) Unit
 
-bulkCreate :: forall eff fields
-            . Model -> Array { | fields } -> Aff (sequelize :: SEQUELIZE | eff) Unit
+bulkCreate :: forall eff fields constructor
+            . Model fields constructor
+           -> Array { | constructor } -> Aff (sequelize :: SEQUELIZE | eff) Unit
 bulkCreate (Model _ m) fs = makeAff \onError onSuccess -> runEffFn4 bulkCreateImpl (mkEffFn1 onError) (onSuccess unit) m fs
 
-foreign import updateImpl :: forall eff fields
+foreign import updateImpl :: forall eff fields fields'
                            . EffFn4 (sequelize :: SEQUELIZE | eff)
                                (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                (Eff (sequelize :: SEQUELIZE | eff) Unit)
-                               Instance { | fields } Unit
+                               (Instance fields) { | fields' } Unit
 
-update :: forall eff fields
-        . Instance -> { | fields } -> Aff (sequelize :: SEQUELIZE | eff) Unit
+update :: forall eff fields fields'
+        . Instance fields -> { | fields' } -> Aff (sequelize :: SEQUELIZE | eff) Unit
 update i f = makeAff \onError onSuccess -> runEffFn4 updateImpl (mkEffFn1 onError) (onSuccess unit) i f
 
 -- foreign import staticUpdateImpl :: forall eff fields
 --                                  . EffFn4 (sequelize :: SEQUELIZE | eff)
 --                                      (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
 
-foreign import destroyImpl :: forall eff
+foreign import destroyImpl :: forall eff fields
                             . EffFn3 (sequelize :: SEQUELIZE | eff)
                                 (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                 (Eff (sequelize :: SEQUELIZE | eff) Unit)
-                                Instance Unit
+                                (Instance fields) Unit
 
-destroy :: forall eff
-         . Instance -> Aff (sequelize :: SEQUELIZE | eff) Unit
+destroy :: forall eff fields
+         . Instance fields -> Aff (sequelize :: SEQUELIZE | eff) Unit
 destroy i = makeAff \onError onSuccess -> runEffFn3 destroyImpl (mkEffFn1 onError) (onSuccess unit) i
 
 foreign import getImpl :: forall eff fields
                         . EffFn2 (sequelize :: SEQUELIZE | eff)
-                            Instance { plain :: Boolean } { | fields }
+                            (Instance fields) { plain :: Boolean } { | fields }
 
 get :: forall eff fields
-     . Instance -> { plain :: Boolean } -> Eff (sequelize :: SEQUELIZE | eff) { | fields }
+     . Instance fields
+    -> { plain :: Boolean } -> Eff (sequelize :: SEQUELIZE | eff) { | fields }
 get = runEffFn2 getImpl
