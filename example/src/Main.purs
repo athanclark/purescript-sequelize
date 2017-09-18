@@ -7,6 +7,7 @@ import Prelude
 import Data.Symbol (SProxy (..))
 import Data.Maybe (Maybe (..))
 import Data.JSDate (JSDate)
+import Data.Argonaut (encodeJson)
 import Control.Monad.Aff (runAff)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Class (liftEff)
@@ -44,9 +45,9 @@ main = do
              $ addFieldWithDefault (SProxy :: SProxy "time")
                 { "type": sqlDATE
                 } sqlNOW
-             $ addFieldWithDefault (SProxy :: SProxy "ayy")
-                { "type": sqlUUID
-                } sqlUUIDV4
+             $ addField (SProxy :: SProxy "ayy")
+                { "type": sqlJSON
+                }
              $ emptyModelDefinition
     baz <- liftEff $ define sql "baz"
              $ addFieldWithDefault (SProxy :: SProxy "baz")
@@ -55,7 +56,7 @@ main = do
              $ emptyModelDefinition
     foo'sBazs <- foo `hasMany` baz
     sync sql
-    void $ create foo {bar: 1}
+    void $ create foo {bar: 1, ayy: encodeJson [1]}
     b <- create baz {}
     mI <- findOne foo {where: {bar: 1}}
     case mI of

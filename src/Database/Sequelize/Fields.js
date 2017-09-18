@@ -26,9 +26,10 @@ exports.sqlFLOAT = Sequelize.FLOAT;
 exports.sqlDOUBLE = Sequelize.DOUBLE;
 exports.sqlDECIMAL = Sequelize.DECIMAL;
 exports.sqlREAL = Sequelize.REAL;
-exports.sqlNOW = Sequelize.NOW;
 exports.sqlUUID = Sequelize.UUID;
+exports.sqlJSON = Sequelize.JSON;
+
+exports.sqlNOW = Sequelize.NOW;
 exports.sqlUUIDV1 = Sequelize.UUIDV1;
 exports.sqlUUIDV4 = Sequelize.UUIDV4;
-
 exports.sqlPgINITIALLYIMMEDIATE = Sequelize.Deferrable.INITIALLY_IMMEDIATE;

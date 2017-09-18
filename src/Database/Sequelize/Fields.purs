@@ -1,7 +1,7 @@
 module Database.Sequelize.Fields
   ( ModelDefinition, ModelImpl
-  , SequelizeType, sqlSTRING, sqlCHAR, sqlTEXT, sqlBOOLEAN, sqlBLOB, sqlDATE, sqlINTEGER, sqlBIGINT, sqlFLOAT, sqlDOUBLE, sqlDECIMAL, sqlREAL, sqlUUID
-  , sqlNOW, sqlUUIDV1, sqlUUIDV4, SequelizeDefer, sqlPgINITIALLYIMMEDIATE
+  , SequelizeType, sqlSTRING, sqlCHAR, sqlTEXT, sqlBOOLEAN, sqlBLOB, sqlDATE, sqlINTEGER, sqlBIGINT, sqlFLOAT, sqlDOUBLE, sqlDECIMAL, sqlREAL, sqlUUID, sqlJSON
+  , sqlNOW, UUID (..), sqlUUIDV1, sqlUUIDV4, SequelizeDefer, sqlPgINITIALLYIMMEDIATE
   , ReferencesParamsO, ReferencesParams, References, makeReferences
   , DefineFieldParamsO, DefineFieldParams, addField, addFieldWithDefault, emptyModelDefinition
   ) where
@@ -11,6 +11,7 @@ import Data.JSDate (JSDate)
 import Data.Function.Uncurried (Fn2, runFn2, Fn3, runFn3)
 import Data.Record.Class (class Subrow)
 import Data.Symbol (SProxy, reflectSymbol, class IsSymbol)
+import Data.Argonaut (Json)
 import DOM.File.Types (Blob)
 import Unsafe.Coerce
 
@@ -33,11 +34,15 @@ foreign import sqlFLOAT :: SequelizeType Number
 foreign import sqlDOUBLE :: SequelizeType Number
 foreign import sqlDECIMAL :: SequelizeType Number
 foreign import sqlREAL :: SequelizeType Number
-foreign import sqlUUID :: SequelizeType String
+foreign import sqlUUID :: SequelizeType UUID
+foreign import sqlJSON :: SequelizeType Json
 
 foreign import sqlNOW :: JSDate
-foreign import sqlUUIDV1 :: String
-foreign import sqlUUIDV4 :: String
+foreign import sqlUUIDV1 :: UUID
+foreign import sqlUUIDV4 :: UUID
+
+
+newtype UUID = UUID String
 
 
 foreign import data SequelizeDefer :: Type
