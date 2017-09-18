@@ -1,6 +1,6 @@
 "use strict";
 
-exports.emptyModelDef = {};
+exports.emptyModelDefinition = {};
 
 exports.unsafeAddModelDef = function unsafeAddModelDef (k,x,acc) {
   var q = {};
