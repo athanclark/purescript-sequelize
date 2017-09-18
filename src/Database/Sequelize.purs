@@ -49,8 +49,7 @@ type SequelizeImplParams o =
   , host     :: String
   , dialect  :: String
   , pool     :: { min :: Int, max :: Int, idle :: Int }
-  | o
-  }
+  | o }
 
 type SequelizeParams o =
   { database :: String

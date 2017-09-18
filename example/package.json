@@ -1,7 +1,6 @@
 {
   "name": "example",
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
   "directories": {
     "test": "test"
@@ -12,8 +11,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "inflect": "^0.4.0",
     "pg": "^7.3.0",
     "pg-hstore": "^2.3.2",
-    "sequelize": "^4.8.3"
-  }
+    "sequelize": "^4.8.4"
+  },
+  "devDependencies": {},
+  "description": ""
 }
