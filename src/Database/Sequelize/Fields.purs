@@ -3,7 +3,7 @@ module Database.Sequelize.Fields
   , SequelizeType, sqlSTRING, sqlTEXT, sqlBOOLEAN, sqlDATE, sqlINTEGER, sqlFLOAT, sqlDOUBLE
   , SequelizeValue, sqlNOW, SequelizeDefer, sqlPgINITIALLYIMMEDIATE
   , ReferencesParamsO, ReferencesParams, References, makeReferences
-  , DefineFieldParamsO, DefineFieldParams, addField, addFieldWithDefault
+  , DefineFieldParamsO, DefineFieldParams, addField, addFieldWithDefault, emptyModelDefinition
   ) where
 
 
@@ -93,7 +93,7 @@ addFieldWithDefault k q d acc =
 
 foreign import data ModelDefinition :: # Type -> # Type -> Type
 
-foreign import emptyModelDef :: ModelDefinition () ()
+foreign import emptyModelDefinition :: ModelDefinition () ()
 
 foreign import unsafeAddModelDef :: forall q a1 a2 b1 b2. Fn3 String q (ModelDefinition a1 a2) (ModelDefinition b1 b2)
 

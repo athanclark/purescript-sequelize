@@ -1,9 +1,10 @@
 module Main where
 
 import Data.URI (Host (..))
-import Database.Sequelize (sequelize, Dialect (Postgres), authenticate, sync, define, sqlSTRING, sqlINTEGER, build, save, makeField, get, findOne, hasMany, create)
+import Database.Sequelize
 
 import Prelude
+import Data.Symbol (SProxy (..))
 import Data.Maybe (Maybe (..))
 import Control.Monad.Aff (runAff)
 import Control.Monad.Eff (Eff)
@@ -36,20 +37,18 @@ main = do
   void $ runAff errorShow logShow $ do
     authenticate sql
     foo <- liftEff $ define sql "foo"
-      { foo: makeField
-          { "type": sqlSTRING
-          , defaultValue: "foo!"
-          }
-      , bar: makeField
-          { "type": sqlINTEGER
-          }
-      }
+             $ addField (SProxy :: SProxy "bar")
+                { "type": sqlINTEGER
+                }
+             $ addFieldWithDefault (SProxy :: SProxy "foo")
+                { "type": sqlSTRING
+                } "foo!"
+             $ emptyModelDefinition
     baz <- liftEff $ define sql "baz"
-      { baz: makeField
-          { "type": sqlSTRING
-          , defaultValue: "foo!"
-          }
-      }
+             $ addFieldWithDefault (SProxy :: SProxy "baz")
+                { "type": sqlSTRING
+                } "foo!"
+             $ emptyModelDefinition
     foo'sBazs <- foo `hasMany` baz
     sync sql
     b <- create baz {}
