@@ -333,11 +333,11 @@ foreign import findByIdImpl :: forall eff
                              . EffFn4 (sequelize :: SEQUELIZE | eff)
                                  (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                  (EffFn1 (sequelize :: SEQUELIZE | eff) (Nullable Instance) Unit)
-                                 Model Int Unit
+                                 ModelImpl Int Unit
 
 findById :: forall eff
           . Model -> Int -> Aff (sequelize :: SEQUELIZE | eff) (Maybe Instance)
-findById m i = makeAff \onError onSuccess -> runEffFn4 findByIdImpl (mkEffFn1 onError) (mkEffFn1 $ onSuccess <<< toMaybe) m i
+findById (Model _ m) i = makeAff \onError onSuccess -> runEffFn4 findByIdImpl (mkEffFn1 onError) (mkEffFn1 $ onSuccess <<< toMaybe) m i
 
 type FindParams whereFields =
   { where :: { | whereFields }
@@ -347,31 +347,31 @@ foreign import findOneImpl :: forall eff whereFields
                             . EffFn4 (sequelize :: SEQUELIZE | eff)
                                 (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                 (EffFn1 (sequelize :: SEQUELIZE | eff) (Nullable Instance) Unit)
-                                Model (FindParams whereFields) Unit
+                                ModelImpl (FindParams whereFields) Unit
 
 findOne :: forall eff whereFields
          . Model -> FindParams whereFields -> Aff (sequelize :: SEQUELIZE | eff) (Maybe Instance)
-findOne m f = makeAff \onError onSuccess -> runEffFn4 findOneImpl (mkEffFn1 onError) (mkEffFn1 $ onSuccess <<< toMaybe) m f
+findOne (Model _ m) f = makeAff \onError onSuccess -> runEffFn4 findOneImpl (mkEffFn1 onError) (mkEffFn1 $ onSuccess <<< toMaybe) m f
 
 foreign import findAllImpl :: forall eff whereFields
                             . EffFn4 (sequelize :: SEQUELIZE | eff)
                                 (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                 (EffFn1 (sequelize :: SEQUELIZE | eff) (Array Instance) Unit)
-                                Model (FindParams whereFields) Unit
+                                ModelImpl (FindParams whereFields) Unit
 
 findAll :: forall eff whereFields
          . Model -> FindParams whereFields -> Aff (sequelize :: SEQUELIZE | eff) (Array Instance)
-findAll m f = makeAff \onError onSuccess -> runEffFn4 findAllImpl (mkEffFn1 onError) (mkEffFn1 onSuccess) m f
+findAll (Model _ m) f = makeAff \onError onSuccess -> runEffFn4 findAllImpl (mkEffFn1 onError) (mkEffFn1 onSuccess) m f
 
 foreign import data UnsavedInstance :: Type
 
 foreign import buildImpl :: forall eff fields
                           . EffFn2 (sequelize :: SEQUELIZE | eff)
-                              Model { | fields } UnsavedInstance
+                              ModelImpl { | fields } UnsavedInstance
 
 build :: forall eff fields
        . Model -> { | fields } -> Eff (sequelize :: SEQUELIZE | eff) UnsavedInstance
-build = runEffFn2 buildImpl
+build (Model _ m) f = runEffFn2 buildImpl m f
 
 foreign import saveImpl :: forall eff
                          . EffFn3 (sequelize :: SEQUELIZE | eff)
@@ -387,21 +387,21 @@ foreign import createImpl :: forall eff fields
                            . EffFn4 (sequelize :: SEQUELIZE | eff)
                                (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                (EffFn1 (sequelize :: SEQUELIZE | eff) Instance Unit)
-                               Model { | fields } Unit
+                               ModelImpl { | fields } Unit
 
 create :: forall eff fields
         . Model -> { | fields } -> Aff (sequelize :: SEQUELIZE | eff) Instance
-create m f = makeAff \onError onSuccess -> runEffFn4 createImpl (mkEffFn1 onError) (mkEffFn1 onSuccess) m f
+create (Model _ m) f = makeAff \onError onSuccess -> runEffFn4 createImpl (mkEffFn1 onError) (mkEffFn1 onSuccess) m f
 
 foreign import bulkCreateImpl :: forall eff fields
                                . EffFn4 (sequelize :: SEQUELIZE | eff)
                                    (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                    (Eff (sequelize :: SEQUELIZE | eff) Unit)
-                                   Model (Array { | fields }) Unit
+                                   ModelImpl (Array { | fields }) Unit
 
 bulkCreate :: forall eff fields
             . Model -> Array { | fields } -> Aff (sequelize :: SEQUELIZE | eff) Unit
-bulkCreate m fs = makeAff \onError onSuccess -> runEffFn4 bulkCreateImpl (mkEffFn1 onError) (onSuccess unit) m fs
+bulkCreate (Model _ m) fs = makeAff \onError onSuccess -> runEffFn4 bulkCreateImpl (mkEffFn1 onError) (onSuccess unit) m fs
 
 foreign import updateImpl :: forall eff fields
                            . EffFn4 (sequelize :: SEQUELIZE | eff)
