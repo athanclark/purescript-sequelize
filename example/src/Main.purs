@@ -1,9 +1,10 @@
 module Main where
 
 import Data.URI (Host (..))
-import Database.Sequelize (sequelize, Dialect (Postgres), authenticate, sync, define, sqlSTRING, sqlINTEGER, build, save, makeField, get)
+import Database.Sequelize (sequelize, Dialect (Postgres), authenticate, sync, define, sqlSTRING, sqlINTEGER, build, save, makeField, get, findOne)
 
 import Prelude
+import Data.Maybe (Maybe (..))
 import Control.Monad.Aff (runAff)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Class (liftEff)
@@ -44,7 +45,13 @@ main = do
           }
       }
     sync sql
-    u <- liftEff $ build m {bar: 1}
-    i <- save u
-    x <- liftEff $ get i {plain: true}
-    pure (x :: Fields).foo
+    -- u <- liftEff $ build m {bar: 1}
+    -- i <- save u
+    mI <- findOne m {where: {bar: 1}}
+    case mI of
+      Nothing -> do
+        liftEff $ log "wut?!"
+        pure "wut"
+      Just i -> do
+        x <- liftEff $ get i {plain: true}
+        pure (x :: Fields).foo
