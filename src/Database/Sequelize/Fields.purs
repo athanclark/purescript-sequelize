@@ -1,13 +1,13 @@
 module Database.Sequelize.Fields
   ( ModelDefinition, ModelImpl
   , SequelizeType, sqlSTRING, sqlTEXT, sqlBOOLEAN, sqlDATE, sqlINTEGER, sqlFLOAT, sqlDOUBLE
-  , SequelizeValue, sqlNOW, SequelizeDefer, sqlPgINITIALLYIMMEDIATE
+  , sqlNOW, SequelizeDefer, sqlPgINITIALLYIMMEDIATE
   , ReferencesParamsO, ReferencesParams, References, makeReferences
   , DefineFieldParamsO, DefineFieldParams, addField, addFieldWithDefault, emptyModelDefinition
   ) where
 
 
-import Data.Date (Date)
+import Data.JSDate (JSDate)
 import Data.Function.Uncurried (Fn2, runFn2, Fn3, runFn3)
 import Data.Record.Class (class Subrow)
 import Data.Symbol (SProxy, reflectSymbol, class IsSymbol)
@@ -23,14 +23,12 @@ foreign import data SequelizeType :: Type -> Type
 foreign import sqlSTRING :: SequelizeType String
 foreign import sqlTEXT :: SequelizeType String
 foreign import sqlBOOLEAN :: SequelizeType Boolean
-foreign import sqlDATE :: SequelizeType (SequelizeValue Date)
+foreign import sqlDATE :: SequelizeType JSDate
 foreign import sqlINTEGER :: SequelizeType Int
 foreign import sqlFLOAT :: SequelizeType Number
 foreign import sqlDOUBLE :: SequelizeType Number
 
-foreign import data SequelizeValue :: Type -> Type
-
-foreign import sqlNOW :: SequelizeValue Date
+foreign import sqlNOW :: JSDate
 
 
 foreign import data SequelizeDefer :: Type

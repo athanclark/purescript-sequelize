@@ -6,6 +6,7 @@ import Database.Sequelize
 import Prelude
 import Data.Symbol (SProxy (..))
 import Data.Maybe (Maybe (..))
+import Data.Date (Date)
 import Control.Monad.Aff (runAff)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Class (liftEff)
@@ -16,10 +17,7 @@ import Unsafe.Coerce (unsafeCoerce)
 type Fields =
   { foo :: String
   , bar :: Int
-  }
-
-type FieldsDefaults =
-  { bar :: Int
+  , time :: SequelizeValue Date
   }
 
 main :: Eff _ Unit
@@ -34,7 +32,7 @@ main = do
         , pool: {min: 0, max: 5, idle: 10000}
         }
   sql <- sequelize args
-  void $ runAff errorShow logShow $ do
+  void $ runAff errorShow log $ do
     authenticate sql
     foo <- liftEff $ define sql "foo"
              $ addField (SProxy :: SProxy "bar")
@@ -43,6 +41,9 @@ main = do
              $ addFieldWithDefault (SProxy :: SProxy "foo")
                 { "type": sqlSTRING
                 } "foo!"
+             $ addFieldWithDefault (SProxy :: SProxy "time")
+                { "type": sqlDATE
+                } sqlNOW
              $ emptyModelDefinition
     baz <- liftEff $ define sql "baz"
              $ addFieldWithDefault (SProxy :: SProxy "baz")
@@ -51,6 +52,7 @@ main = do
              $ emptyModelDefinition
     foo'sBazs <- foo `hasMany` baz
     sync sql
+    void $ create foo {bar: 1}
     b <- create baz {}
     mI <- findOne foo {where: {bar: 1}}
     case mI of
@@ -60,4 +62,4 @@ main = do
       Just i -> do
         foo'sBazs.set i [b]
         x <- liftEff $ get i {plain: true}
-        pure (x :: Fields).foo
+        pure $ unsafeCoerce $ (x :: Fields)
