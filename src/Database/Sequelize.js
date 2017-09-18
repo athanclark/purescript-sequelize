@@ -6,7 +6,6 @@ exports.sequelizeImpl = function sequelizeImpl (ps) {
   var database = ps.database;
   var username = ps.username;
   var password = ps.password;
-  console.log("args",ps);
   delete ps.database;
   delete ps.username;
   delete ps.password;

@@ -5,6 +5,7 @@ module Database.Sequelize
   , SequelizeType, sqlSTRING, sqlTEXT, sqlBOOLEAN, sqlDATE, sqlINTEGER, sqlFLOAT, sqlDOUBLE
   , SequelizeValue, sqlNOW
   , DefineFieldParams, DefineFieldParamsO, ReferencesParamsO
+  , References, ReferencesParamsO, ReferencesParams, makeReferences
   , SequelizeDefer, sqlPgINITIALLYIMMEDIATE
   , Field, makeField
   , Model (..), ModelImpl, define, hasOne, belongsTo, hasMany, belongsToMany
@@ -136,21 +137,32 @@ type ReferencesParamsO =
   ( deferrable :: SequelizeDefer
   )
 
-type DefineFieldParamsO value references =
+type ReferencesParams o =
+  { model :: ModelImpl
+  , key :: String
+  | o }
+
+foreign import data References :: Type
+
+makeReferences :: forall o
+                . Subrow o ReferencesParamsO
+               => ReferencesParams o -> References
+makeReferences = unsafeCoerce
+
+type DefineFieldParamsO value =
   ( allowNull :: Boolean
   , defaultValue :: value
   , unique :: String
   , primaryKey :: Boolean
   , autoIncrement :: Boolean
   , field :: String
-  , references :: { model :: ModelImpl, key :: String | references }
+  , references :: References
   )
 
 foreign import data Field :: Type
 
-makeField :: forall o refsO value
-           . Subrow o (DefineFieldParamsO value refsO)
-          => Subrow refsO ReferencesParamsO
+makeField :: forall o value
+           . Subrow o (DefineFieldParamsO value)
           => DefineFieldParams value o -> Field
 makeField = unsafeCoerce
 
