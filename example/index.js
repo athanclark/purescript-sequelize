@@ -683,10 +683,10 @@ var PS = {};
     var database = ps.database;
     var username = ps.username;
     var password = ps.password;
+    console.log("args",ps);
     delete ps.database;
     delete ps.username;
     delete ps.password;
-    console.log("args",ps);
     return new Sequelize(database,username,password,ps);
   };
 

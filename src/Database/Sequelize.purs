@@ -83,7 +83,7 @@ foreign import sequelizeImpl :: forall eff o
 sequelize :: forall eff o
            . Subrow o SequelizeParamsO
            => SequelizeParams o -> Eff (sequelize :: SEQUELIZE | eff) Sequelize
-sequelize = runEffFn1 sequelizeImpl <<< toSequelizeImplParams
+sequelize x = runEffFn1 sequelizeImpl (toSequelizeImplParams x)
 
 
 foreign import authenticateImpl :: forall eff
