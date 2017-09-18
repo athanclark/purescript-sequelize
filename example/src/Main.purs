@@ -44,6 +44,9 @@ main = do
              $ addFieldWithDefault (SProxy :: SProxy "time")
                 { "type": sqlDATE
                 } sqlNOW
+             $ addFieldWithDefault (SProxy :: SProxy "ayy")
+                { "type": sqlUUID
+                } sqlUUIDV4
              $ emptyModelDefinition
     baz <- liftEff $ define sql "baz"
              $ addFieldWithDefault (SProxy :: SProxy "baz")

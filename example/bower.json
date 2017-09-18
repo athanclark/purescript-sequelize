@@ -13,5 +13,8 @@
   },
   "devDependencies": {
     "purescript-psci-support": "^3.0.0"
+  },
+  "resolutions": {
+    "purescript-js-date": "^5.1.0"
   }
 }

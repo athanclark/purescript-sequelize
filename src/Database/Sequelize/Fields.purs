@@ -1,7 +1,7 @@
 module Database.Sequelize.Fields
   ( ModelDefinition, ModelImpl
-  , SequelizeType, sqlSTRING, sqlTEXT, sqlBOOLEAN, sqlDATE, sqlINTEGER, sqlFLOAT, sqlDOUBLE
-  , sqlNOW, SequelizeDefer, sqlPgINITIALLYIMMEDIATE
+  , SequelizeType, sqlSTRING, sqlCHAR, sqlTEXT, sqlBOOLEAN, sqlBLOB, sqlDATE, sqlINTEGER, sqlBIGINT, sqlFLOAT, sqlDOUBLE, sqlDECIMAL, sqlREAL, sqlUUID
+  , sqlNOW, sqlUUIDV1, sqlUUIDV4, SequelizeDefer, sqlPgINITIALLYIMMEDIATE
   , ReferencesParamsO, ReferencesParams, References, makeReferences
   , DefineFieldParamsO, DefineFieldParams, addField, addFieldWithDefault, emptyModelDefinition
   ) where
