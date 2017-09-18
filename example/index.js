@@ -904,16 +904,20 @@ var PS = {};
           };
       };
   };
-  var create = function (m) {
+  var create = function (v) {
       return function (f) {
           return Control_Monad_Aff.makeAff(function (onError) {
               return function (onSuccess) {
-                  return Control_Monad_Eff_Uncurried.runEffFn4($foreign.createImpl)(Control_Monad_Eff_Uncurried.mkEffFn1(onError))(Control_Monad_Eff_Uncurried.mkEffFn1(onSuccess))(m)(f);
+                  return Control_Monad_Eff_Uncurried.runEffFn4($foreign.createImpl)(Control_Monad_Eff_Uncurried.mkEffFn1(onError))(Control_Monad_Eff_Uncurried.mkEffFn1(onSuccess))(v.value1)(f);
               };
           });
       };
   };
-  var build = Control_Monad_Eff_Uncurried.runEffFn2($foreign.buildImpl);
+  var build = function (v) {
+      return function (f) {
+          return Control_Monad_Eff_Uncurried.runEffFn2($foreign.buildImpl)(v.value1)(f);
+      };
+  };
   var authenticate = function (sql) {
       return Control_Monad_Aff.makeAff(function (onError) {
           return function (onSuccess) {
