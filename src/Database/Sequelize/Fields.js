@@ -1,5 +1,7 @@
 "use strict";
 
+var Sequelize = require('sequelize');
+
 exports.emptyModelDefinition = {};
 
 exports.unsafeAddModelDef = function unsafeAddModelDef (k,x,acc) {
