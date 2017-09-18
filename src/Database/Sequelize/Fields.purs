@@ -1,6 +1,6 @@
 module Database.Sequelize.Fields
   ( ModelDefinition, ModelImpl
-  , SequelizeType, sqlSTRING, sqlCHAR, sqlTEXT, sqlBOOLEAN, sqlBLOB, sqlDATE, sqlINTEGER, sqlBIGINT, sqlFLOAT, sqlDOUBLE, sqlDECIMAL, sqlREAL, sqlUUID, sqlJSON
+  , SequelizeType, sqlSTRING, sqlCHAR, sqlTEXT, sqlBOOLEAN, sqlBLOB, sqlDATE, sqlINTEGER, sqlBIGINT, sqlFLOAT, sqlDOUBLE, sqlDECIMAL, sqlREAL, sqlUUID, sqlJSON, sqlARRAY
   , sqlNOW, UUID (..), sqlUUIDV1, sqlUUIDV4, SequelizeDefer, sqlPgINITIALLYIMMEDIATE
   , ReferencesParamsO, ReferencesParams, References, makeReferences
   , DefineFieldParamsO, DefineFieldParams, addField, addFieldWithDefault, emptyModelDefinition
@@ -36,6 +36,7 @@ foreign import sqlDECIMAL :: SequelizeType Number
 foreign import sqlREAL :: SequelizeType Number
 foreign import sqlUUID :: SequelizeType UUID
 foreign import sqlJSON :: SequelizeType Json
+foreign import sqlARRAY :: forall a. SequelizeType a -> SequelizeType (Array a)
 
 foreign import sqlNOW :: JSDate
 foreign import sqlUUIDV1 :: UUID

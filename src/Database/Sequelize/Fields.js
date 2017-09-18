@@ -28,6 +28,9 @@ exports.sqlDECIMAL = Sequelize.DECIMAL;
 exports.sqlREAL = Sequelize.REAL;
 exports.sqlUUID = Sequelize.UUID;
 exports.sqlJSON = Sequelize.JSON;
+exports.sqlARRAY = function sqlARRAYImpl (x) {
+  return Sequelize.ARRAY(x);
+};
 
 exports.sqlNOW = Sequelize.NOW;
 exports.sqlUUIDV1 = Sequelize.UUIDV1;
