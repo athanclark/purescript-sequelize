@@ -35,7 +35,7 @@ main = do
   sql <- sequelize args
   void $ runAff errorShow logShow $ do
     authenticate sql
-    m <- liftEff $ define sql "foo"
+    foo <- liftEff $ define sql "foo"
       { foo: makeField
           { "type": sqlSTRING
           , defaultValue: "foo!"
@@ -44,14 +44,21 @@ main = do
           { "type": sqlINTEGER
           }
       }
+    baz <- liftEff $ define sql "baz"
+      { baz: makeField
+          { "type": sqlSTRING
+          , defaultValue: "foo!"
+          }
+      }
+    foo'sBazs <- foo `hasMany` baz
     sync sql
-    -- u <- liftEff $ build m {bar: 1}
-    -- i <- save u
-    mI <- findOne m {where: {bar: 1}}
+    b <- liftEff $ create baz {}
+    mI <- findOne foo {where: {bar: 1}}
     case mI of
       Nothing -> do
         liftEff $ log "wut?!"
         pure "wut"
       Just i -> do
+        foo'sBazs.set [b]
         x <- liftEff $ get i {plain: true}
         pure (x :: Fields).foo

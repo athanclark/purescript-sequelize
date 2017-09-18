@@ -24,7 +24,7 @@ import Data.Date (Date)
 import Control.Monad.Aff (Aff, makeAff)
 import Control.Monad.Eff (Eff, kind Effect)
 import Control.Monad.Eff.Class (liftEff)
-import Control.Monad.Eff.Uncurried (EffFn1, mkEffFn1, runEffFn1, EffFn2, runEffFn2, EffFn3, runEffFn3, EffFn4, runEffFn4)
+import Control.Monad.Eff.Uncurried (EffFn1, mkEffFn1, runEffFn1, EffFn2, runEffFn2, EffFn3, runEffFn3, EffFn4, runEffFn4, EffFn5, runEffFn5)
 import Control.Monad.Eff.Exception (Error)
 import Unsafe.Coerce (unsafeCoerce)
 
@@ -186,144 +186,158 @@ define s n fs = Model n <$> runEffFn3 defineImpl s n fs
 foreign import belongsToImpl :: forall eff
                               . EffFn3 (sequelize :: SEQUELIZE | eff)
                                   String ModelImpl ModelImpl
-                                    { get :: EffFn2 (sequelize :: SEQUELIZE | eff)
+                                    { get :: EffFn3 (sequelize :: SEQUELIZE | eff)
                                                (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                                (EffFn1 (sequelize :: SEQUELIZE | eff) (Nullable Instance) Unit)
+                                               Instance
                                                Unit
-                                    , set :: EffFn3 (sequelize :: SEQUELIZE | eff)
+                                    , set :: EffFn4 (sequelize :: SEQUELIZE | eff)
                                                (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                                (Eff (sequelize :: SEQUELIZE | eff) Unit)
+                                               Instance
                                                (Nullable Instance) Unit
                                     }
 
 belongsTo :: forall eff
            . Model -> Model
           -> Aff (sequelize :: SEQUELIZE | eff)
-               { get :: Aff (sequelize :: SEQUELIZE | eff) (Maybe Instance)
-               , set :: Maybe Instance -> Aff (sequelize :: SEQUELIZE | eff) Unit
+               { get :: Instance -> Aff (sequelize :: SEQUELIZE | eff) (Maybe Instance)
+               , set :: Instance -> Maybe Instance -> Aff (sequelize :: SEQUELIZE | eff) Unit
                }
 belongsTo (Model childName childM) (Model _ parentM) = do
   {get,set} <- liftEff $ runEffFn3 belongsToImpl childName childM parentM
   pure
-    { get: makeAff \onError onSuccess -> runEffFn2 get (mkEffFn1 onError) (mkEffFn1 \x -> onSuccess (toMaybe x))
-    , set: \i -> makeAff \onError onSuccess -> runEffFn3 set (mkEffFn1 onError) (onSuccess unit) (toNullable i)
+    { get: \q -> makeAff \onError onSuccess -> runEffFn3 get (mkEffFn1 onError) (mkEffFn1 \x -> onSuccess (toMaybe x)) q
+    , set: \q i -> makeAff \onError onSuccess -> runEffFn4 set (mkEffFn1 onError) (onSuccess unit) q (toNullable i)
     }
 
 
 foreign import hasOneImpl :: forall eff
                            . EffFn3 (sequelize :: SEQUELIZE | eff)
                                ModelImpl ModelImpl String
-                                 { get :: EffFn2 (sequelize :: SEQUELIZE | eff)
+                                 { get :: EffFn3 (sequelize :: SEQUELIZE | eff)
                                             (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                             (EffFn1 (sequelize :: SEQUELIZE | eff) (Nullable Instance) Unit)
+                                            Instance
                                             Unit
-                                 , set :: EffFn3 (sequelize :: SEQUELIZE | eff)
+                                 , set :: EffFn4 (sequelize :: SEQUELIZE | eff)
                                             (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                             (Eff (sequelize :: SEQUELIZE | eff) Unit)
+                                            Instance
                                             (Nullable Instance) Unit
                                  }
 
 hasOne :: forall eff
         . Model -> Model
        -> Aff (sequelize :: SEQUELIZE | eff)
-            { get :: Aff (sequelize :: SEQUELIZE | eff) (Maybe Instance)
-            , set :: Maybe Instance -> Aff (sequelize :: SEQUELIZE | eff) Unit
+            { get :: Instance -> Aff (sequelize :: SEQUELIZE | eff) (Maybe Instance)
+            , set :: Instance -> Maybe Instance -> Aff (sequelize :: SEQUELIZE | eff) Unit
             }
 hasOne (Model _ parentM) (Model childName childM) = do
   {get,set} <- liftEff $ runEffFn3 hasOneImpl parentM childM childName
   pure
-    { get: makeAff \onError onSuccess -> runEffFn2 get (mkEffFn1 onError) (mkEffFn1 $ \i -> onSuccess (toMaybe i))
-    , set: \i -> makeAff \onError onSuccess -> runEffFn3 set (mkEffFn1 onError) (onSuccess unit) (toNullable i)
+    { get: \q -> makeAff \onError onSuccess -> runEffFn3 get (mkEffFn1 onError) (mkEffFn1 $ \i -> onSuccess (toMaybe i)) q
+    , set: \q i -> makeAff \onError onSuccess -> runEffFn4 set (mkEffFn1 onError) (onSuccess unit) q (toNullable i)
     }
 
 
 foreign import hasManyImpl :: forall eff
                             . EffFn3 (sequelize :: SEQUELIZE | eff)
                                 ModelImpl ModelImpl String
-                                  { get :: EffFn2 (sequelize :: SEQUELIZE | eff)
+                                  { get :: EffFn3 (sequelize :: SEQUELIZE | eff)
                                              (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                              (EffFn1 (sequelize :: SEQUELIZE | eff) (Array Instance) Unit)
+                                             Instance
                                              Unit
-                                  , set :: EffFn3 (sequelize :: SEQUELIZE | eff)
+                                  , set :: EffFn4 (sequelize :: SEQUELIZE | eff)
                                              (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                              (Eff (sequelize :: SEQUELIZE | eff) Unit)
+                                             Instance
                                              (Array Instance) Unit
-                                  , add :: EffFn3 (sequelize :: SEQUELIZE | eff)
+                                  , add :: EffFn4 (sequelize :: SEQUELIZE | eff)
                                              (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                              (Eff (sequelize :: SEQUELIZE | eff) Unit)
+                                             Instance
                                              (Array Instance) Unit
-                                  , has :: EffFn3 (sequelize :: SEQUELIZE | eff)
+                                  , has :: EffFn4 (sequelize :: SEQUELIZE | eff)
                                              (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                              (EffFn1 (sequelize :: SEQUELIZE | eff) Boolean Unit)
+                                             Instance
                                              (Array Instance) Unit
-                                  , remove :: EffFn3 (sequelize :: SEQUELIZE | eff)
+                                  , remove :: EffFn4 (sequelize :: SEQUELIZE | eff)
                                              (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                              (Eff (sequelize :: SEQUELIZE | eff) Unit)
+                                             Instance
                                              (Array Instance) Unit
                                   }
 
 hasMany :: forall eff
          . Model -> Model
         -> Aff (sequelize :: SEQUELIZE | eff)
-             { get :: Aff (sequelize :: SEQUELIZE | eff) (Array Instance)
-             , set :: Array Instance -> Aff (sequelize :: SEQUELIZE | eff) Unit
-             , add :: Array Instance -> Aff (sequelize :: SEQUELIZE | eff) Unit
-             , has :: Array Instance -> Aff (sequelize :: SEQUELIZE | eff) Boolean
-             , remove :: Array Instance -> Aff (sequelize :: SEQUELIZE | eff) Unit
+             { get :: Instance -> Aff (sequelize :: SEQUELIZE | eff) (Array Instance)
+             , set :: Instance -> Array Instance -> Aff (sequelize :: SEQUELIZE | eff) Unit
+             , add :: Instance -> Array Instance -> Aff (sequelize :: SEQUELIZE | eff) Unit
+             , has :: Instance -> Array Instance -> Aff (sequelize :: SEQUELIZE | eff) Boolean
+             , remove :: Instance -> Array Instance -> Aff (sequelize :: SEQUELIZE | eff) Unit
              }
 hasMany (Model _ parentM) (Model childName childM) = do
   {get,set,add,has,remove} <- liftEff $ runEffFn3 hasManyImpl parentM childM childName
   pure
-    { get: makeAff \onError onSuccess -> runEffFn2 get (mkEffFn1 onError) (mkEffFn1 onSuccess)
-    , set: \is -> makeAff \onError onSuccess -> runEffFn3 set (mkEffFn1 onError) (onSuccess unit) is
-    , add: \is -> makeAff \onError onSuccess -> runEffFn3 add (mkEffFn1 onError) (onSuccess unit) is
-    , has: \is -> makeAff \onError onSuccess -> runEffFn3 has (mkEffFn1 onError) (mkEffFn1 onSuccess) is
-    , remove: \is -> makeAff \onError onSuccess -> runEffFn3 remove (mkEffFn1 onError) (onSuccess unit) is
+    { get: \q -> makeAff \onError onSuccess -> runEffFn3 get (mkEffFn1 onError) (mkEffFn1 onSuccess) q
+    , set: \q is -> makeAff \onError onSuccess -> runEffFn4 set (mkEffFn1 onError) (onSuccess unit) q is
+    , add: \q is -> makeAff \onError onSuccess -> runEffFn4 add (mkEffFn1 onError) (onSuccess unit) q is
+    , has: \q is -> makeAff \onError onSuccess -> runEffFn4 has (mkEffFn1 onError) (mkEffFn1 onSuccess) q is
+    , remove: \q is -> makeAff \onError onSuccess -> runEffFn4 remove (mkEffFn1 onError) (onSuccess unit) q is
     }
 
 
 foreign import belongsToManyImpl :: forall eff fields
                                   . EffFn4 (sequelize :: SEQUELIZE | eff)
                                       String ModelImpl ModelImpl { through :: Model }
-                                        { get :: EffFn2 (sequelize :: SEQUELIZE | eff)
+                                        { get :: EffFn3 (sequelize :: SEQUELIZE | eff)
                                                    (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                                    (EffFn1 (sequelize :: SEQUELIZE | eff) (Array Instance) Unit)
+                                                   Instance
                                                    Unit
-                                        , set :: EffFn4 (sequelize :: SEQUELIZE | eff)
+                                        , set :: EffFn5 (sequelize :: SEQUELIZE | eff)
                                                    (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                                    (Eff (sequelize :: SEQUELIZE | eff) Unit)
+                                                   Instance
                                                    (Array Instance) { through :: { | fields } } Unit
-                                        , add :: EffFn4 (sequelize :: SEQUELIZE | eff)
+                                        , add :: EffFn5 (sequelize :: SEQUELIZE | eff)
                                                    (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                                    (Eff (sequelize :: SEQUELIZE | eff) Unit)
+                                                   Instance
                                                    (Array Instance) { through :: { | fields } } Unit
-                                        , has :: EffFn3 (sequelize :: SEQUELIZE | eff)
+                                        , has :: EffFn4 (sequelize :: SEQUELIZE | eff)
                                                    (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                                    (EffFn1 (sequelize :: SEQUELIZE | eff) Boolean Unit)
+                                                   Instance
                                                    (Array Instance) Unit
-                                        , remove :: EffFn3 (sequelize :: SEQUELIZE | eff)
+                                        , remove :: EffFn4 (sequelize :: SEQUELIZE | eff)
                                                    (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                                    (Eff (sequelize :: SEQUELIZE | eff) Unit)
+                                                   Instance
                                                    (Array Instance) Unit
                                         }
 
 belongsToMany :: forall eff fields
                . Model -> Model -> {through :: Model}
               -> Aff (sequelize :: SEQUELIZE | eff)
-                   { get :: Aff (sequelize :: SEQUELIZE | eff) (Array Instance)
-                   , set :: Array Instance -> { through :: { | fields } } -> Aff (sequelize :: SEQUELIZE | eff) Unit
-                   , add :: Array Instance -> { through :: { | fields } } -> Aff (sequelize :: SEQUELIZE | eff) Unit
-                   , has :: Array Instance -> Aff (sequelize :: SEQUELIZE | eff) Boolean
-                   , remove :: Array Instance -> Aff (sequelize :: SEQUELIZE | eff) Unit
+                   { get :: Instance -> Aff (sequelize :: SEQUELIZE | eff) (Array Instance)
+                   , set :: Instance -> Array Instance -> { through :: { | fields } } -> Aff (sequelize :: SEQUELIZE | eff) Unit
+                   , add :: Instance -> Array Instance -> { through :: { | fields } } -> Aff (sequelize :: SEQUELIZE | eff) Unit
+                   , has :: Instance -> Array Instance -> Aff (sequelize :: SEQUELIZE | eff) Boolean
+                   , remove :: Instance -> Array Instance -> Aff (sequelize :: SEQUELIZE | eff) Unit
                    }
 belongsToMany (Model childName childM) (Model _ parentM) through = do
   {get,set,add,has,remove} <- liftEff $ runEffFn4 belongsToManyImpl childName childM parentM through
   pure
-    { get: makeAff \onError onSuccess -> runEffFn2 get (mkEffFn1 onError) (mkEffFn1 onSuccess)
-    , set: \is th -> makeAff \onError onSuccess -> runEffFn4 set (mkEffFn1 onError) (onSuccess unit) is th
-    , add: \is th -> makeAff \onError onSuccess -> runEffFn4 add (mkEffFn1 onError) (onSuccess unit) is th
-    , has: \is -> makeAff \onError onSuccess -> runEffFn3 has (mkEffFn1 onError) (mkEffFn1 onSuccess) is
-    , remove: \is -> makeAff \onError onSuccess -> runEffFn3 remove (mkEffFn1 onError) (onSuccess unit) is
+    { get: \q -> makeAff \onError onSuccess -> runEffFn3 get (mkEffFn1 onError) (mkEffFn1 onSuccess) q
+    , set: \q is th -> makeAff \onError onSuccess -> runEffFn5 set (mkEffFn1 onError) (onSuccess unit) q is th
+    , add: \q is th -> makeAff \onError onSuccess -> runEffFn5 add (mkEffFn1 onError) (onSuccess unit) q is th
+    , has: \q is -> makeAff \onError onSuccess -> runEffFn4 has (mkEffFn1 onError) (mkEffFn1 onSuccess) q is
+    , remove: \q is -> makeAff \onError onSuccess -> runEffFn4 remove (mkEffFn1 onError) (onSuccess unit) q is
     }
 
 

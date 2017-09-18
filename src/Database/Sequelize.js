@@ -40,11 +40,11 @@ var inflect = require('inflect');
 exports.belongsToImpl = function belongsToImpl (childName,child,parent) {
   child.belongsTo(parent);
   return {
-    get: function getImpl (onError,onSuccess) {
-      parent['get' + inflect.capitalize(childName)]().then(onSuccess).catch(onError);
+    get: function getImpl (onError,onSuccess,q) {
+      q['get' + inflect.capitalize(childName)]().then(onSuccess).catch(onError);
     },
-    set: function setImpl (onError,onSuccess,x) {
-      parent['set' + inflect.capitalize(childName)](x).then(onSuccess).catch(onError);
+    set: function setImpl (onError,onSuccess,q,x) {
+      q['set' + inflect.capitalize(childName)](x).then(onSuccess).catch(onError);
     }
   };
 };
@@ -52,11 +52,11 @@ exports.belongsToImpl = function belongsToImpl (childName,child,parent) {
 exports.hasOneImpl = function hasOneImpl (parent,child,childName) {
   parent.hasOne(child);
   return {
-    get: function getImpl (onError,onSuccess) {
-      parent['get' + inflect.capitalize(childName)]().then(onSuccess).catch(onError);
+    get: function getImpl (onError,onSuccess,q) {
+      q['get' + inflect.capitalize(childName)]().then(onSuccess).catch(onError);
     },
-    set: function setImpl (onError,onSuccess,x) {
-      parent['set' + inflect.capitalize(childName)](x).then(onSuccess).catch(onError);
+    set: function setImpl (onError,onSuccess,q,x) {
+      q['set' + inflect.capitalize(childName)](x).then(onSuccess).catch(onError);
     }
   };
 };
@@ -64,20 +64,20 @@ exports.hasOneImpl = function hasOneImpl (parent,child,childName) {
 exports.hasManyImpl = function hasManyImpl (parent,child,childName) {
   parent.hasMany(child);
   return {
-    get: function getImpl (onError,onSuccess) {
-      parent['get' + inflect.capitalize(inflect.pluralize(childName))]().then(onSuccess).catch(onError);
+    get: function getImpl (onError,onSuccess,q) {
+      q['get' + inflect.capitalize(inflect.pluralize(childName))]().then(onSuccess).catch(onError);
     },
-    set: function setImpl (onError,onSuccess,xs) {
-      parent['set' + inflect.capitalize(inflect.pluralize(childName))](xs).then(onSuccess).catch(onError);
+    set: function setImpl (onError,onSuccess,q,xs) {
+      q['set' + inflect.capitalize(inflect.pluralize(childName))](xs).then(onSuccess).catch(onError);
     },
-    add: function addImpl (onError,onSuccess,xs) {
-      parent['add' + inflect.capitalize(inflect.pluralize(childName))](xs).then(onSuccess).catch(onError);
+    add: function addImpl (onError,onSuccess,q,xs) {
+      q['add' + inflect.capitalize(inflect.pluralize(childName))](xs).then(onSuccess).catch(onError);
     },
-    has: function hasImpl (onError,onSuccess,xs) {
-      parent['has' + inflect.capitalize(inflect.pluralize(childName))](xs).then(onSuccess).catch(onError);
+    has: function hasImpl (onError,onSuccess,q,xs) {
+      q['has' + inflect.capitalize(inflect.pluralize(childName))](xs).then(onSuccess).catch(onError);
     },
-    remove: function removeImpl (onError,onSuccess,xs) {
-      parent['remove' + inflect.capitalize(inflect.pluralize(childName))](xs).then(onSuccess).catch(onError);
+    remove: function removeImpl (onError,onSuccess,q,xs) {
+      q['remove' + inflect.capitalize(inflect.pluralize(childName))](xs).then(onSuccess).catch(onError);
     }
   };
 };
@@ -85,20 +85,20 @@ exports.hasManyImpl = function hasManyImpl (parent,child,childName) {
 exports.belongsToManyImpl = function belongsToManyImpl (childName,child,parent,through) {
   child.belongsToMany(parent,through);
   return {
-    get: function getImpl (onError,onSuccess) {
-      parent['get' + inflect.capitalize(inflect.pluralize(childName))]().then(onSuccess).catch(onError);
+    get: function getImpl (onError,onSuccess,q) {
+      q['get' + inflect.capitalize(inflect.pluralize(childName))]().then(onSuccess).catch(onError);
     },
-    set: function setImpl (onError,onSuccess,xs,through) {
-      parent['set' + inflect.capitalize(inflect.pluralize(childName))](xs,through).then(onSuccess).catch(onError);
+    set: function setImpl (onError,onSuccess,q,xs,through) {
+      q['set' + inflect.capitalize(inflect.pluralize(childName))](xs,through).then(onSuccess).catch(onError);
     },
-    add: function addImpl (onError,onSuccess,xs,through) {
-      parent['add' + inflect.capitalize(inflect.pluralize(childName))](xs,through).then(onSuccess).catch(onError);
+    add: function addImpl (onError,onSuccess,q,xs,through) {
+      q['add' + inflect.capitalize(inflect.pluralize(childName))](xs,through).then(onSuccess).catch(onError);
     },
-    has: function hasImpl (onError,onSuccess,xs) {
-      parent['has' + inflect.capitalize(inflect.pluralize(childName))](xs).then(onSuccess).catch(onError);
+    has: function hasImpl (onError,onSuccess,q,xs) {
+      q['has' + inflect.capitalize(inflect.pluralize(childName))](xs).then(onSuccess).catch(onError);
     },
-    remove: function removeImpl (onError,onSuccess,xs) {
-      parent['remove' + inflect.capitalize(inflect.pluralize(childName))](xs).then(onSuccess).catch(onError);
+    remove: function removeImpl (onError,onSuccess,q,xs) {
+      q['remove' + inflect.capitalize(inflect.pluralize(childName))](xs).then(onSuccess).catch(onError);
     }
   };
 };
