@@ -15,12 +15,20 @@ exports.unsafeAddDefaultValue = function unsafeAddDefaultValue (acc,v) {
 };
 
 exports.sqlSTRING = Sequelize.STRING;
+exports.sqlCHAR = Sequelize.CHAR;
 exports.sqlTEXT = Sequelize.TEXT;
 exports.sqlBOOLEAN = Sequelize.BOOLEAN;
+exports.sqlBLOB = Sequelize.BLOB;
 exports.sqlDATE = Sequelize.DATE;
 exports.sqlINTEGER = Sequelize.INTEGER;
+exports.sqlBIGINT = Sequelize.BIGINT;
 exports.sqlFLOAT = Sequelize.FLOAT;
 exports.sqlDOUBLE = Sequelize.DOUBLE;
+exports.sqlDECIMAL = Sequelize.DECIMAL;
+exports.sqlREAL = Sequelize.REAL;
 exports.sqlNOW = Sequelize.NOW;
+exports.sqlUUID = Sequelize.UUID;
+exports.sqlUUIDV1 = Sequelize.UUIDV1;
+exports.sqlUUIDV4 = Sequelize.UUIDV4;
 
 exports.sqlPgINITIALLYIMMEDIATE = Sequelize.Deferrable.INITIALLY_IMMEDIATE;

@@ -11,6 +11,7 @@ import Data.JSDate (JSDate)
 import Data.Function.Uncurried (Fn2, runFn2, Fn3, runFn3)
 import Data.Record.Class (class Subrow)
 import Data.Symbol (SProxy, reflectSymbol, class IsSymbol)
+import DOM.File.Types (Blob)
 import Unsafe.Coerce
 
 
@@ -21,14 +22,22 @@ foreign import data ModelImpl :: # Type -> # Type -> Type
 foreign import data SequelizeType :: Type -> Type
 
 foreign import sqlSTRING :: SequelizeType String
+foreign import sqlCHAR :: SequelizeType String
 foreign import sqlTEXT :: SequelizeType String
 foreign import sqlBOOLEAN :: SequelizeType Boolean
+foreign import sqlBLOB :: SequelizeType Blob
 foreign import sqlDATE :: SequelizeType JSDate
 foreign import sqlINTEGER :: SequelizeType Int
+foreign import sqlBIGINT :: SequelizeType Int
 foreign import sqlFLOAT :: SequelizeType Number
 foreign import sqlDOUBLE :: SequelizeType Number
+foreign import sqlDECIMAL :: SequelizeType Number
+foreign import sqlREAL :: SequelizeType Number
+foreign import sqlUUID :: SequelizeType String
 
 foreign import sqlNOW :: JSDate
+foreign import sqlUUIDV1 :: String
+foreign import sqlUUIDV4 :: String
 
 
 foreign import data SequelizeDefer :: Type

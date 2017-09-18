@@ -6,7 +6,7 @@ import Database.Sequelize
 import Prelude
 import Data.Symbol (SProxy (..))
 import Data.Maybe (Maybe (..))
-import Data.Date (Date)
+import Data.JSDate (JSDate)
 import Control.Monad.Aff (runAff)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Class (liftEff)
@@ -17,7 +17,7 @@ import Unsafe.Coerce (unsafeCoerce)
 type Fields =
   { foo :: String
   , bar :: Int
-  , time :: SequelizeValue Date
+  , time :: JSDate
   }
 
 main :: Eff _ Unit
@@ -62,4 +62,4 @@ main = do
       Just i -> do
         foo'sBazs.set i [b]
         x <- liftEff $ get i {plain: true}
-        pure $ unsafeCoerce $ (x :: Fields)
+        pure $ unsafeCoerce x
