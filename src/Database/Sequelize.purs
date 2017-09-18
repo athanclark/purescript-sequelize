@@ -1,6 +1,6 @@
 module Database.Sequelize
   ( SEQUELIZE, Sequelize
-  , SequelizeParams, SequelizeParamsO, Dialect (..)
+  , SequelizeParams, Dialect (..)
   , sequelize, authenticate, sync
   , SequelizeType, sqlSTRING, sqlTEXT, sqlBOOLEAN, sqlDATE, sqlINTEGER, sqlFLOAT, sqlDOUBLE
   , SequelizeValue, sqlNOW
@@ -42,33 +42,36 @@ instance showDialect :: Show Dialect where
   show Mssql = "mssql"
 
 
-type SequelizeImplParams o =
+type SequelizeImplParams =
   { database :: String
   , username :: String
   , password :: String
   , host     :: String
   , dialect  :: String
   , pool     :: { min :: Int, max :: Int, idle :: Int }
-  | o }
+  }
 
-type SequelizeParams o =
+-- FIXME needs to account for storage
+type SequelizeParams =
   { database :: String
   , username :: String
   , password :: String
   , host     :: Host
   , dialect  :: Dialect
   , pool     :: { min :: Int, max :: Int, idle :: Int }
-  | o }
+  }
 
-toSequelizeImplParams :: forall o. SequelizeParams o -> SequelizeImplParams o
-toSequelizeImplParams x@{host,dialect} =
-  x { host = Host.print host
-    , dialect = show dialect
-    }
+toSequelizeImplParams :: SequelizeParams -> SequelizeImplParams
+toSequelizeImplParams {database,username,password,host,dialect,pool} =
+  { database,username,password,pool
+  , host: Host.print host
+  , dialect: show dialect
+  }
 
-type SequelizeParamsO =
-  ( storage :: String -- Sqlite
-  )
+-- FIXME
+-- type SequelizeParamsO =
+--   ( storage :: String -- Sqlite
+--   )
 
 
 foreign import data SEQUELIZE :: Effect
@@ -76,13 +79,12 @@ foreign import data SEQUELIZE :: Effect
 foreign import data Sequelize :: Type
 
 foreign import sequelizeImpl :: forall eff o
-                              . Subrow o SequelizeParamsO
-                             => EffFn1 (sequelize :: SEQUELIZE | eff) (SequelizeImplParams o) Sequelize
+                              -- . Subrow o SequelizeParamsO
+                              . EffFn1 (sequelize :: SEQUELIZE | eff) SequelizeImplParams Sequelize
 
 
-sequelize :: forall eff o
-           . Subrow o SequelizeParamsO
-           => SequelizeParams o -> Eff (sequelize :: SEQUELIZE | eff) Sequelize
+sequelize :: forall eff
+           . SequelizeParams -> Eff (sequelize :: SEQUELIZE | eff) Sequelize
 sequelize x = runEffFn1 sequelizeImpl (toSequelizeImplParams x)
 
 
