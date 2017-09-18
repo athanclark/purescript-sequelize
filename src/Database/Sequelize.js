@@ -16,6 +16,9 @@ exports.authenticateImpl = function authenticateImpl (onError,onSuccess,sequeliz
   sequelize.authenticate().then(onSuccess).catch(onError);
 };
 
+exports.syncImpl = function syncImpl (onError,onSuccess,sequelize) {
+  sequelize.sync().then(onSuccess).catch(onError);
+};
 
 exports.sqlSTRING = Sequelize.STRING;
 exports.sqlTEXT = Sequelize.TEXT;
@@ -30,6 +33,74 @@ exports.sqlPgINITIALLYIMMEDIATE = Sequelize.Deferrable.INITIALLY_IMMEDIATE;
 
 exports.defineImpl = function defineImpl (sequelize,modelName,fields) {
   return sequelize.define(modelName,fields);
+};
+
+var inflect = require('inflect');
+
+exports.belongsToImpl = function belongsToImpl (childName,child,parent) {
+  child.belongsTo(parent);
+  return {
+    get: function getImpl (onError,onSuccess) {
+      parent['get' + inflect.capitalize(childName)]().then(onSuccess).catch(onError);
+    },
+    set: function setImpl (onError,onSuccess,x) {
+      parent['set' + inflect.capitalize(childName)](x).then(onSuccess).catch(onError);
+    }
+  };
+};
+
+exports.hasOneImpl = function hasOneImpl (parent,child,childName) {
+  parent.hasOne(child);
+  return {
+    get: function getImpl (onError,onSuccess) {
+      parent['get' + inflect.capitalize(childName)]().then(onSuccess).catch(onError);
+    },
+    set: function setImpl (onError,onSuccess,x) {
+      parent['set' + inflect.capitalize(childName)](x).then(onSuccess).catch(onError);
+    }
+  };
+};
+
+exports.hasManyImpl = function hasManyImpl (parent,child,childName) {
+  parent.hasMany(child);
+  return {
+    get: function getImpl (onError,onSuccess) {
+      parent['get' + inflect.capitalize(inflect.pluralize(childName))]().then(onSuccess).catch(onError);
+    },
+    set: function setImpl (onError,onSuccess,xs) {
+      parent['set' + inflect.capitalize(inflect.pluralize(childName))](xs).then(onSuccess).catch(onError);
+    },
+    add: function addImpl (onError,onSuccess,xs) {
+      parent['add' + inflect.capitalize(inflect.pluralize(childName))](xs).then(onSuccess).catch(onError);
+    },
+    has: function hasImpl (onError,onSuccess,xs) {
+      parent['has' + inflect.capitalize(inflect.pluralize(childName))](xs).then(onSuccess).catch(onError);
+    },
+    remove: function removeImpl (onError,onSuccess,xs) {
+      parent['remove' + inflect.capitalize(inflect.pluralize(childName))](xs).then(onSuccess).catch(onError);
+    }
+  };
+};
+
+exports.belongsToManyImpl = function belongsToManyImpl (childName,child,parent,through) {
+  child.belongsToMany(parent,through);
+  return {
+    get: function getImpl (onError,onSuccess) {
+      parent['get' + inflect.capitalize(inflect.pluralize(childName))]().then(onSuccess).catch(onError);
+    },
+    set: function setImpl (onError,onSuccess,xs,through) {
+      parent['set' + inflect.capitalize(inflect.pluralize(childName))](xs,through).then(onSuccess).catch(onError);
+    },
+    add: function addImpl (onError,onSuccess,xs,through) {
+      parent['add' + inflect.capitalize(inflect.pluralize(childName))](xs,through).then(onSuccess).catch(onError);
+    },
+    has: function hasImpl (onError,onSuccess,xs) {
+      parent['has' + inflect.capitalize(inflect.pluralize(childName))](xs).then(onSuccess).catch(onError);
+    },
+    remove: function removeImpl (onError,onSuccess,xs) {
+      parent['remove' + inflect.capitalize(inflect.pluralize(childName))](xs).then(onSuccess).catch(onError);
+    }
+  };
 };
 
 exports.findByIdImpl = function findByIdImpl (onError,onSuccess,Model,id) {
