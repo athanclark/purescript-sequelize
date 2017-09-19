@@ -22,7 +22,7 @@
     "purescript-uri": "^4.0.0",
     "purescript-aff": "^3.1.0",
     "purescript-js-date": "^5.1.0",
-    "purescript-dom": "^4.8.2"
+    "purescript-node-buffer": "^3.0.1"
   },
   "devDependencies": {
     "purescript-psci-support": "^3.0.0"

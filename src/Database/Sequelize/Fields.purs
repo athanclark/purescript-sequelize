@@ -12,7 +12,7 @@ import Data.Function.Uncurried (Fn2, runFn2, Fn3, runFn3)
 import Data.Record.Class (class Subrow)
 import Data.Symbol (SProxy, reflectSymbol, class IsSymbol)
 import Data.Argonaut (Json)
-import DOM.File.Types (Blob)
+import Node.Buffer (Buffer)
 import Unsafe.Coerce
 
 
@@ -26,7 +26,7 @@ foreign import sqlSTRING :: SequelizeType String
 foreign import sqlCHAR :: SequelizeType String
 foreign import sqlTEXT :: SequelizeType String
 foreign import sqlBOOLEAN :: SequelizeType Boolean
-foreign import sqlBLOB :: SequelizeType Blob
+foreign import sqlBLOB :: SequelizeType Buffer
 foreign import sqlDATE :: SequelizeType JSDate
 foreign import sqlINTEGER :: SequelizeType Int
 foreign import sqlBIGINT :: SequelizeType Int
@@ -37,6 +37,7 @@ foreign import sqlREAL :: SequelizeType Number
 foreign import sqlUUID :: SequelizeType UUID
 foreign import sqlJSON :: SequelizeType Json
 foreign import sqlARRAY :: forall a. SequelizeType a -> SequelizeType (Array a)
+foreign import sqlENUM :: Array String -> SequelizeType String
 
 foreign import sqlNOW :: JSDate
 foreign import sqlUUIDV1 :: UUID

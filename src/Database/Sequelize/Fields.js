@@ -31,6 +31,9 @@ exports.sqlJSON = Sequelize.JSON;
 exports.sqlARRAY = function sqlARRAYImpl (x) {
   return Sequelize.ARRAY(x);
 };
+exports.sqlENUM = function sqlENUMImpl (xs) {
+  return Sequelize.ENUM(xs);
+};
 
 exports.sqlNOW = Sequelize.NOW;
 exports.sqlUUIDV1 = Sequelize.UUIDV1;
