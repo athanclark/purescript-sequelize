@@ -124,11 +124,24 @@ define :: forall eff fields constructor
 define s n fs = Model n <$> runEffFn3 defineImpl s n fs
 
 
-foreign import belongsToImpl :: forall eff childFields childConstructor parentFields parentConstructor
-                              . EffFn3 (sequelize :: SEQUELIZE | eff)
+type BelongsToParamsO =
+  ( hooks :: Boolean
+  , as :: String
+  , foreignKey :: String
+  , targetKey :: String
+  , onDelete :: String
+  , onUpdate :: String
+  , constraints :: Boolean
+  )
+
+
+foreign import belongsToImpl :: forall eff childFields childConstructor parentFields parentConstructor params
+                              . Subrow params BelongsToParamsO
+                             => EffFn4 (sequelize :: SEQUELIZE | eff)
                                   String
                                   (ModelImpl childFields childConstructor)
                                   (ModelImpl parentFields parentConstructor)
+                                  { | params }
                                     { get :: EffFn3 (sequelize :: SEQUELIZE | eff)
                                                (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                                (EffFn1 (sequelize :: SEQUELIZE | eff) (Nullable (Instance childFields)) Unit)
@@ -141,24 +154,39 @@ foreign import belongsToImpl :: forall eff childFields childConstructor parentFi
                                                (Nullable (Instance childFields)) Unit
                                     }
 
-belongsTo :: forall eff childFields childConstructor parentFields parentConstructor
-           . Model childFields childConstructor -> Model parentFields parentConstructor
+belongsTo :: forall eff childFields childConstructor parentFields parentConstructor params
+           . Subrow params BelongsToParamsO
+          => Model childFields childConstructor -> Model parentFields parentConstructor -> { | params }
           -> Aff (sequelize :: SEQUELIZE | eff)
                { get :: Instance parentFields -> Aff (sequelize :: SEQUELIZE | eff) (Maybe (Instance childFields))
                , set :: Instance parentFields -> Maybe (Instance childFields) -> Aff (sequelize :: SEQUELIZE | eff) Unit
                }
-belongsTo (Model childName childM) (Model _ parentM) = do
-  {get,set} <- liftEff $ runEffFn3 belongsToImpl childName childM parentM
+belongsTo (Model childName childM) (Model _ parentM) ps = do
+  {get,set} <- liftEff $ runEffFn4 belongsToImpl childName childM parentM ps
   pure
     { get: \q -> makeAff \onError onSuccess -> runEffFn3 get (mkEffFn1 onError) (mkEffFn1 \x -> onSuccess (toMaybe x)) q
     , set: \q i -> makeAff \onError onSuccess -> runEffFn4 set (mkEffFn1 onError) (onSuccess unit) q (toNullable i)
     }
 
 
-foreign import hasOneImpl :: forall eff childFields childConstructor parentFields parentConstructor
-                           . EffFn3 (sequelize :: SEQUELIZE | eff)
+
+type HasOneParamsO =
+  ( hooks :: Boolean
+  , as :: String
+  , foreignKey :: String
+  , onDelete :: String
+  , onUpdate :: String
+  , constraints :: Boolean
+  )
+
+
+
+foreign import hasOneImpl :: forall eff childFields childConstructor parentFields parentConstructor params
+                           . Subrow params HasOneParamsO
+                          => EffFn4 (sequelize :: SEQUELIZE | eff)
                                (ModelImpl parentFields parentConstructor)
                                (ModelImpl childFields childConstructor) String
+                               { | params }
                                  { get :: EffFn3 (sequelize :: SEQUELIZE | eff)
                                             (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                             (EffFn1 (sequelize :: SEQUELIZE | eff) (Nullable (Instance childFields)) Unit)
@@ -171,25 +199,40 @@ foreign import hasOneImpl :: forall eff childFields childConstructor parentField
                                             (Nullable (Instance childFields)) Unit
                                  }
 
-hasOne :: forall eff childFields childConstructor parentFields parentConstructor
-        . Model parentFields parentConstructor
+hasOne :: forall eff childFields childConstructor parentFields parentConstructor params
+        . Subrow params HasOneParamsO
+       => Model parentFields parentConstructor
        -> Model childFields childConstructor
+       -> { | params }
        -> Aff (sequelize :: SEQUELIZE | eff)
             { get :: Instance parentFields -> Aff (sequelize :: SEQUELIZE | eff) (Maybe (Instance childFields))
             , set :: Instance parentFields -> Maybe (Instance childFields) -> Aff (sequelize :: SEQUELIZE | eff) Unit
             }
-hasOne (Model _ parentM) (Model childName childM) = do
-  {get,set} <- liftEff $ runEffFn3 hasOneImpl parentM childM childName
+hasOne (Model _ parentM) (Model childName childM) ps = do
+  {get,set} <- liftEff $ runEffFn4 hasOneImpl parentM childM childName ps
   pure
     { get: \q -> makeAff \onError onSuccess -> runEffFn3 get (mkEffFn1 onError) (mkEffFn1 $ \i -> onSuccess (toMaybe i)) q
     , set: \q i -> makeAff \onError onSuccess -> runEffFn4 set (mkEffFn1 onError) (onSuccess unit) q (toNullable i)
     }
 
 
-foreign import hasManyImpl :: forall eff childFields childConstructor parentFields parentConstructor
-                            . EffFn3 (sequelize :: SEQUELIZE | eff)
+type HasManyParamsO =
+  ( hooks :: Boolean
+  , as :: String
+  , foreignKey :: String
+  , sourceKey :: String
+  , onDelete :: String
+  , onUpdate :: String
+  , constraints :: Boolean
+  )
+
+
+foreign import hasManyImpl :: forall eff childFields childConstructor parentFields parentConstructor params
+                            . Subrow params HasManyParamsO
+                           => EffFn4 (sequelize :: SEQUELIZE | eff)
                                 (ModelImpl parentFields parentConstructor)
                                 (ModelImpl childFields childConstructor) String
+                                { | params }
                                   { get :: EffFn3 (sequelize :: SEQUELIZE | eff)
                                              (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                              (EffFn1 (sequelize :: SEQUELIZE | eff) (Array (Instance childFields)) Unit)
@@ -217,8 +260,9 @@ foreign import hasManyImpl :: forall eff childFields childConstructor parentFiel
                                              (Array (Instance childFields)) Unit
                                   }
 
-hasMany :: forall eff childFields childConstructor parentFields parentConstructor
-         . Model parentFields parentConstructor -> Model childFields childConstructor
+hasMany :: forall eff childFields childConstructor parentFields parentConstructor params
+         . Subrow params HasManyParamsO
+        => Model parentFields parentConstructor -> Model childFields childConstructor -> { | params }
         -> Aff (sequelize :: SEQUELIZE | eff)
              { get :: Instance parentFields -> Aff (sequelize :: SEQUELIZE | eff) (Array (Instance childFields))
              , set :: Instance parentFields -> Array (Instance childFields) -> Aff (sequelize :: SEQUELIZE | eff) Unit
@@ -226,8 +270,8 @@ hasMany :: forall eff childFields childConstructor parentFields parentConstructo
              , has :: Instance parentFields -> Array (Instance childFields) -> Aff (sequelize :: SEQUELIZE | eff) Boolean
              , remove :: Instance parentFields -> Array (Instance childFields) -> Aff (sequelize :: SEQUELIZE | eff) Unit
              }
-hasMany (Model _ parentM) (Model childName childM) = do
-  {get,set,add,has,remove} <- liftEff $ runEffFn3 hasManyImpl parentM childM childName
+hasMany (Model _ parentM) (Model childName childM) ps = do
+  {get,set,add,has,remove} <- liftEff $ runEffFn4 hasManyImpl parentM childM childName ps
   pure
     { get: \q -> makeAff \onError onSuccess -> runEffFn3 get (mkEffFn1 onError) (mkEffFn1 onSuccess) q
     , set: \q is -> makeAff \onError onSuccess -> runEffFn4 set (mkEffFn1 onError) (onSuccess unit) q is
@@ -237,11 +281,31 @@ hasMany (Model _ parentM) (Model childName childM) = do
     }
 
 
-foreign import belongsToManyImpl :: forall eff fields childFields childConstructor parentFields parentConstructor throughFields throughConstructor
-                                  . EffFn4 (sequelize :: SEQUELIZE | eff)
+type BelongsToManyParams throughFields throughConstructor o =
+  { through ::
+    { model :: ModelImpl throughFields throughConstructor
+    , unique :: Boolean
+    }
+  | o }
+
+type BelongsToManyParamsO =
+  ( hooks :: Boolean
+  , as :: String
+  , foreignKey :: String
+  , otherKey :: String
+  , timestamps :: Boolean
+  , onDelete :: String
+  , onUpdate :: String
+  , constraints :: Boolean
+  )
+
+
+foreign import belongsToManyImpl :: forall eff fields childFields childConstructor parentFields parentConstructor throughFields throughConstructor params
+                                  . Subrow params BelongsToManyParamsO
+                                 => EffFn4 (sequelize :: SEQUELIZE | eff)
                                       String (ModelImpl childFields childConstructor)
                                       (ModelImpl parentFields parentConstructor)
-                                      { through :: Model throughFields throughConstructor }
+                                      (BelongsToManyParams throughFields throughConstructor params)
                                         { get :: EffFn3 (sequelize :: SEQUELIZE | eff)
                                                    (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                                    (EffFn1 (sequelize :: SEQUELIZE | eff) (Array (Instance childFields)) Unit)
@@ -273,10 +337,11 @@ foreign import belongsToManyImpl :: forall eff fields childFields childConstruct
                                                    (Array (Instance childFields)) Unit
                                         }
 
-belongsToMany :: forall eff fields childFields childConstructor parentFields parentConstructor throughFields throughConstructor
-               . Model childFields childConstructor
+belongsToMany :: forall eff fields childFields childConstructor parentFields parentConstructor throughFields throughConstructor params
+               . Subrow params BelongsToManyParamsO
+              => Model childFields childConstructor
               -> Model parentFields parentConstructor
-              -> {through :: Model throughFields throughConstructor}
+              -> (BelongsToManyParams throughFields throughConstructor params)
               -> Aff (sequelize :: SEQUELIZE | eff)
                    { get :: Instance parentFields -> Aff (sequelize :: SEQUELIZE | eff) (Array (Instance childFields))
                    , set :: Instance parentFields -> Array (Instance childFields) -> { through :: { | throughConstructor } } -> Aff (sequelize :: SEQUELIZE | eff) Unit

@@ -26,8 +26,8 @@ exports.defineImpl = function defineImpl (sequelize,modelName,fields) {
 
 var inflect = require('inflect');
 
-exports.belongsToImpl = function belongsToImpl (childName,child,parent) {
-  child.belongsTo(parent);
+exports.belongsToImpl = function belongsToImpl (childName,child,parent,params) {
+    child.belongsTo(parent,params);
   return {
     get: function getImpl (onError,onSuccess,q) {
       q['get' + inflect.capitalize(childName)]().then(onSuccess).catch(onError);
@@ -38,8 +38,8 @@ exports.belongsToImpl = function belongsToImpl (childName,child,parent) {
   };
 };
 
-exports.hasOneImpl = function hasOneImpl (parent,child,childName) {
-  parent.hasOne(child);
+exports.hasOneImpl = function hasOneImpl (parent,child,childName,params) {
+    parent.hasOne(child,params);
   return {
     get: function getImpl (onError,onSuccess,q) {
       q['get' + inflect.capitalize(childName)]().then(onSuccess).catch(onError);
@@ -50,8 +50,8 @@ exports.hasOneImpl = function hasOneImpl (parent,child,childName) {
   };
 };
 
-exports.hasManyImpl = function hasManyImpl (parent,child,childName) {
-  parent.hasMany(child);
+exports.hasManyImpl = function hasManyImpl (parent,child,childName,params) {
+  parent.hasMany(child,params);
   return {
     get: function getImpl (onError,onSuccess,q) {
       q['get' + inflect.capitalize(inflect.pluralize(childName))]().then(onSuccess).catch(onError);
@@ -71,8 +71,8 @@ exports.hasManyImpl = function hasManyImpl (parent,child,childName) {
   };
 };
 
-exports.belongsToManyImpl = function belongsToManyImpl (childName,child,parent,through) {
-  child.belongsToMany(parent,through);
+exports.belongsToManyImpl = function belongsToManyImpl (childName,child,parent,params) {
+  child.belongsToMany(parent,params);
   return {
     get: function getImpl (onError,onSuccess,q) {
       q['get' + inflect.capitalize(inflect.pluralize(childName))]().then(onSuccess).catch(onError);
