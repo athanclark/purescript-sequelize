@@ -7,6 +7,7 @@ module Database.Sequelize
   , UnsavedInstance, build, save
   , create, bulkCreate, update, destroy, get
   , module Fields
+  , OneToOneResult, ManyToOneResult, ManyToManyResult
   ) where
 
 import Database.Sequelize.Fields (ModelDefinition, ModelImpl)
@@ -141,12 +142,17 @@ foreign import belongsToImpl :: forall eff childFields childConstructor parentFi
                                                (Nullable (Instance childFields)) Unit
                                     }
 
+
+type OneToOneResult eff parentFields childFields =
+  { get :: Instance parentFields -> Aff eff (Maybe (Instance childFields))
+  , set :: Instance parentFields -> Maybe (Instance childFields) -> Aff eff Unit
+  }
+
+
 belongsTo :: forall eff childFields childConstructor parentFields parentConstructor
            . Model childFields childConstructor -> Model parentFields parentConstructor
           -> Aff (sequelize :: SEQUELIZE | eff)
-               { get :: Instance parentFields -> Aff (sequelize :: SEQUELIZE | eff) (Maybe (Instance childFields))
-               , set :: Instance parentFields -> Maybe (Instance childFields) -> Aff (sequelize :: SEQUELIZE | eff) Unit
-               }
+               (OneToOneResult (sequelize :: SEQUELIZE | eff) parentFields childFields)
 belongsTo (Model childName childM) (Model _ parentM) = do
   {get,set} <- liftEff $ runEffFn3 belongsToImpl childName childM parentM
   pure
@@ -175,9 +181,7 @@ hasOne :: forall eff childFields childConstructor parentFields parentConstructor
         . Model parentFields parentConstructor
        -> Model childFields childConstructor
        -> Aff (sequelize :: SEQUELIZE | eff)
-            { get :: Instance parentFields -> Aff (sequelize :: SEQUELIZE | eff) (Maybe (Instance childFields))
-            , set :: Instance parentFields -> Maybe (Instance childFields) -> Aff (sequelize :: SEQUELIZE | eff) Unit
-            }
+            (OneToOneResult (sequelize :: SEQUELIZE | eff) parentFields childFields)
 hasOne (Model _ parentM) (Model childName childM) = do
   {get,set} <- liftEff $ runEffFn3 hasOneImpl parentM childM childName
   pure
@@ -217,15 +221,18 @@ foreign import hasManyImpl :: forall eff childFields childConstructor parentFiel
                                              (Array (Instance childFields)) Unit
                                   }
 
+type ManyToOneResult eff parentFields childFields =
+  { get :: Instance parentFields -> Aff eff (Array (Instance childFields))
+  , set :: Instance parentFields -> Array (Instance childFields) -> Aff eff Unit
+  , add :: Instance parentFields -> Array (Instance childFields) -> Aff eff Unit
+  , has :: Instance parentFields -> Array (Instance childFields) -> Aff eff Boolean
+  , remove :: Instance parentFields -> Array (Instance childFields) -> Aff eff Unit
+  }
+
 hasMany :: forall eff childFields childConstructor parentFields parentConstructor
          . Model parentFields parentConstructor -> Model childFields childConstructor
         -> Aff (sequelize :: SEQUELIZE | eff)
-             { get :: Instance parentFields -> Aff (sequelize :: SEQUELIZE | eff) (Array (Instance childFields))
-             , set :: Instance parentFields -> Array (Instance childFields) -> Aff (sequelize :: SEQUELIZE | eff) Unit
-             , add :: Instance parentFields -> Array (Instance childFields) -> Aff (sequelize :: SEQUELIZE | eff) Unit
-             , has :: Instance parentFields -> Array (Instance childFields) -> Aff (sequelize :: SEQUELIZE | eff) Boolean
-             , remove :: Instance parentFields -> Array (Instance childFields) -> Aff (sequelize :: SEQUELIZE | eff) Unit
-             }
+             (ManyToOneResult (sequelize :: SEQUELIZE | eff) parentFields childFields)
 hasMany (Model _ parentM) (Model childName childM) = do
   {get,set,add,has,remove} <- liftEff $ runEffFn3 hasManyImpl parentM childM childName
   pure
@@ -273,17 +280,20 @@ foreign import belongsToManyImpl :: forall eff fields childFields childConstruct
                                                    (Array (Instance childFields)) Unit
                                         }
 
+type ManyToManyResult eff parentFields childFields throughConstructor =
+  { get :: Instance parentFields -> Aff eff (Array (Instance childFields))
+  , set :: Instance parentFields -> Array (Instance childFields) -> { through :: { | throughConstructor } } -> Aff eff Unit
+  , add :: Instance parentFields -> Array (Instance childFields) -> { through :: { | throughConstructor } } -> Aff eff Unit
+  , has :: Instance parentFields -> Array (Instance childFields) -> Aff eff Boolean
+  , remove :: Instance parentFields -> Array (Instance childFields) -> Aff eff Unit
+  }
+
 belongsToMany :: forall eff fields childFields childConstructor parentFields parentConstructor throughFields throughConstructor
                . Model childFields childConstructor
               -> Model parentFields parentConstructor
               -> {through :: Model throughFields throughConstructor}
               -> Aff (sequelize :: SEQUELIZE | eff)
-                   { get :: Instance parentFields -> Aff (sequelize :: SEQUELIZE | eff) (Array (Instance childFields))
-                   , set :: Instance parentFields -> Array (Instance childFields) -> { through :: { | throughConstructor } } -> Aff (sequelize :: SEQUELIZE | eff) Unit
-                   , add :: Instance parentFields -> Array (Instance childFields) -> { through :: { | throughConstructor } } -> Aff (sequelize :: SEQUELIZE | eff) Unit
-                   , has :: Instance parentFields -> Array (Instance childFields) -> Aff (sequelize :: SEQUELIZE | eff) Boolean
-                   , remove :: Instance parentFields -> Array (Instance childFields) -> Aff (sequelize :: SEQUELIZE | eff) Unit
-                   }
+                   (ManyToManyResult (sequelize :: SEQUELIZE | eff) parentFields childFields throughConstructor)
 belongsToMany (Model childName childM) (Model _ parentM) through = do
   {get,set,add,has,remove} <- liftEff $ runEffFn4 belongsToManyImpl childName childM parentM through
   pure
