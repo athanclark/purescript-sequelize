@@ -17,7 +17,6 @@ import Unsafe.Coerce (unsafeCoerce)
 
 type Fields =
   { foo :: String
-  , bar :: Int
   , time :: JSDate
   }
 
@@ -36,12 +35,9 @@ main = do
   void $ runAff errorShow log $ do
     authenticate sql
     foo <- liftEff $ define sql "foo"
-             $ addField (SProxy :: SProxy "bar")
-                { "type": sqlINTEGER
-                }
-             $ addFieldWithDefault (SProxy :: SProxy "foo")
+             $ addField (SProxy :: SProxy "foo")
                 { "type": sqlSTRING
-                } "foo!"
+                }
              $ addFieldWithDefault (SProxy :: SProxy "time")
                 { "type": sqlDATE
                 } sqlNOW
@@ -49,21 +45,22 @@ main = do
                 { "type": sqlJSON
                 }
              $ emptyModelDefinition
+    bar <- liftEff $ define sql "bar" emptyModelDefinition
     baz <- liftEff $ define sql "baz"
              $ addFieldWithDefault (SProxy :: SProxy "baz")
                 { "type": sqlSTRING
-                } "foo!"
+                } "baz!"
              $ emptyModelDefinition
-    foo'sBazs <- foo `hasMany` baz
+    foo'sBazs <- (baz `belongsToMany` foo) {through: {model: bar, unique: true}}
     sync sql
-    void $ create foo {bar: 1, ayy: encodeJson [1]}
+    void $ create foo {foo: "ayy", ayy: encodeJson [1]}
     b <- create baz {}
-    mI <- findOne foo {where: {bar: 1}}
+    mI <- findOne foo {where: {foo: "ayy"}}
     case mI of
       Nothing -> do
         liftEff $ log "wut?!"
         pure "wut"
       Just i -> do
-        foo'sBazs.set i [b]
+        foo'sBazs.add i [b] {through: {}}
         x <- liftEff $ get i {plain: true}
         pure $ unsafeCoerce x

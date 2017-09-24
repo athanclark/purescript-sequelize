@@ -244,11 +244,20 @@ hasMany (Model _ parentM) (Model childName childM) = do
     }
 
 
+-- type BelongsToManyThroughO =
+--   ( 
+--   )
+
+
 foreign import belongsToManyImpl :: forall eff fields childFields childConstructor parentFields parentConstructor throughFields throughConstructor
                                   . EffFn4 (sequelize :: SEQUELIZE | eff)
                                       String (ModelImpl childFields childConstructor)
                                       (ModelImpl parentFields parentConstructor)
-                                      { through :: Model throughFields throughConstructor }
+                                      { through ::
+                                        { model :: Model throughFields throughConstructor
+                                        , unique :: Boolean
+                                        }
+                                      }
                                         { get :: EffFn3 (sequelize :: SEQUELIZE | eff)
                                                    (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                                    (EffFn1 (sequelize :: SEQUELIZE | eff) (Array (Instance childFields)) Unit)
@@ -291,7 +300,11 @@ type ManyToManyResult eff parentFields childFields throughConstructor =
 belongsToMany :: forall eff fields childFields childConstructor parentFields parentConstructor throughFields throughConstructor
                . Model childFields childConstructor
               -> Model parentFields parentConstructor
-              -> {through :: Model throughFields throughConstructor}
+              -> { through ::
+                   { model :: Model throughFields throughConstructor
+                   , unique :: Boolean
+                   }
+                 }
               -> Aff (sequelize :: SEQUELIZE | eff)
                    (ManyToManyResult (sequelize :: SEQUELIZE | eff) parentFields childFields throughConstructor)
 belongsToMany (Model childName childM) (Model _ parentM) through = do
