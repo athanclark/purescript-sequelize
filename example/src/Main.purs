@@ -50,7 +50,7 @@ main = do
                 { "type": sqlSTRING
                 } "baz!"
              $ emptyModelDefinition
-    foo'sBazs <- (baz `belongsToMany` foo) {through: "BazFoo"}
+    foo'sBazs <- baz `belongsToMany` foo
     sync sql
     void $ create foo {foo: "ayy", ayy: encodeJson [1]}
     b <- create baz {}

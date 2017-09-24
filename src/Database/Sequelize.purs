@@ -251,9 +251,9 @@ hasMany (Model _ parentM) (Model childName childM) = do
 
 
 foreign import belongsToManyImpl :: forall eff fields childFields childConstructor parentFields parentConstructor throughFields throughConstructor
-                                  . EffFn3 (sequelize :: SEQUELIZE | eff)
+                                  . EffFn4 (sequelize :: SEQUELIZE | eff)
                                       String (ModelImpl childFields childConstructor)
-                                      (ModelImpl parentFields parentConstructor)
+                                      (ModelImpl parentFields parentConstructor) String
                                         { get :: EffFn3 (sequelize :: SEQUELIZE | eff)
                                                    (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
                                                    (EffFn1 (sequelize :: SEQUELIZE | eff) (Array (Instance childFields)) Unit)
@@ -302,7 +302,7 @@ belongsToMany (Model childName childM) (Model parentName parentM) = do
   let throughName
         | childName < parentName = capitalize childName <> capitalize parentName
         | otherwise              = capitalize parentName <> capitalize childName
-  {get,set,add,has,remove} <- liftEff $ runEffFn3 belongsToManyImpl throughName childM parentM
+  {get,set,add,has,remove} <- liftEff $ runEffFn4 belongsToManyImpl childName childM parentM throughName
   pure
     { get: \q -> makeAff \onError onSuccess -> runEffFn3 get (mkEffFn1 onError) (mkEffFn1 onSuccess) q
     , set: \q is th -> makeAff \onError onSuccess -> runEffFn5 set (mkEffFn1 onError) (onSuccess unit) q is th
