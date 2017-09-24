@@ -21,6 +21,7 @@ import Data.URI.Host as Host
 import Data.Maybe (Maybe (..))
 import Data.Date (Date)
 import Data.String.Inflection (capitalize)
+import Data.Symbol (SProxy (..), class IsSymbol, reflectSymbol)
 import Control.Monad.Aff (Aff, makeAff)
 import Control.Monad.Eff (Eff, kind Effect)
 import Control.Monad.Eff.Class (liftEff)
@@ -424,11 +425,19 @@ destroy :: forall eff fields
          . Instance fields -> Aff (sequelize :: SEQUELIZE | eff) Unit
 destroy i = makeAff \onError onSuccess -> runEffFn3 destroyImpl (mkEffFn1 onError) (onSuccess unit) i
 
-foreign import getImpl :: forall eff fields
-                        . EffFn2 (sequelize :: SEQUELIZE | eff)
-                            (Instance fields) { plain :: Boolean } { | fields }
 
-get :: forall eff fields
-     . Instance fields
-    -> { plain :: Boolean } -> Eff (sequelize :: SEQUELIZE | eff) { | fields }
-get = runEffFn2 getImpl
+type WithId o =
+  ( id :: Int
+  | o )
+
+foreign import getImpl :: forall eff fields t
+                        . EffFn2 (sequelize :: SEQUELIZE | eff)
+                            (Instance fields) String t
+
+get :: forall eff fields' fields t k
+     . RowCons k t (WithId fields') (WithId fields)
+    => IsSymbol k
+    => Instance fields
+    -> SProxy k
+    -> Eff (sequelize :: SEQUELIZE | eff) t
+get i p = runEffFn2 getImpl i (reflectSymbol p)
