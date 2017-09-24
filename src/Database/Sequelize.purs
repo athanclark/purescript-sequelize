@@ -20,6 +20,7 @@ import Data.URI (Host)
 import Data.URI.Host as Host
 import Data.Maybe (Maybe (..))
 import Data.Date (Date)
+import Data.String.Inflection (capitalize)
 import Control.Monad.Aff (Aff, makeAff)
 import Control.Monad.Eff (Eff, kind Effect)
 import Control.Monad.Eff.Class (liftEff)
@@ -292,7 +293,7 @@ type ManyToManyResult eff parentFields childFields throughConstructor =
   , remove :: Instance parentFields -> Array (Instance childFields) -> Aff eff Unit
   }
 
-belongsToMany :: forall eff fields childFields childConstructor parentFields parentConstructor
+belongsToMany :: forall eff fields childFields childConstructor parentFields parentConstructor throughConstructor
                . Model childFields childConstructor
               -> Model parentFields parentConstructor
               -> Aff (sequelize :: SEQUELIZE | eff)
@@ -301,7 +302,7 @@ belongsToMany (Model childName childM) (Model parentName parentM) = do
   let throughName
         | childName < parentName = capitalize childName <> capitalize parentName
         | otherwise              = capitalize parentName <> capitalize childName
-  {get,set,add,has,remove} <- liftEff $ runEffFn3 belongsToManyImpl throughName childM parentM through
+  {get,set,add,has,remove} <- liftEff $ runEffFn3 belongsToManyImpl throughName childM parentM
   pure
     { get: \q -> makeAff \onError onSuccess -> runEffFn3 get (mkEffFn1 onError) (mkEffFn1 onSuccess) q
     , set: \q is th -> makeAff \onError onSuccess -> runEffFn5 set (mkEffFn1 onError) (onSuccess unit) q is th
