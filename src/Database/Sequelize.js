@@ -81,6 +81,7 @@ exports.belongsToManyImpl = function belongsToManyImpl (childName,child,parent,t
       q['set' + inflect.capitalize(inflect.pluralize(childName))](xs,through).then(onSuccess).catch(onError);
     },
     add: function addImpl (onError,onSuccess,q,xs,through) {
+      console.log('addImpl:',q);
       q['add' + inflect.capitalize(inflect.pluralize(childName))](xs,through).then(onSuccess).catch(onError);
     },
     has: function hasImpl (onError,onSuccess,q,xs) {
