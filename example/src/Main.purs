@@ -45,13 +45,12 @@ main = do
                 { "type": sqlJSON
                 }
              $ emptyModelDefinition
-    bar <- liftEff $ define sql "bar" emptyModelDefinition
     baz <- liftEff $ define sql "baz"
              $ addFieldWithDefault (SProxy :: SProxy "baz")
                 { "type": sqlSTRING
                 } "baz!"
              $ emptyModelDefinition
-    foo'sBazs <- (baz `belongsToMany` foo) {through: {model: bar, unique: true}}
+    foo'sBazs <- (baz `belongsToMany` foo) {through: "BazFoo"}
     sync sql
     void $ create foo {foo: "ayy", ayy: encodeJson [1]}
     b <- create baz {}

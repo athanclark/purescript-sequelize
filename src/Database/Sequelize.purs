@@ -253,10 +253,7 @@ foreign import belongsToManyImpl :: forall eff fields childFields childConstruct
                                   . EffFn4 (sequelize :: SEQUELIZE | eff)
                                       String (ModelImpl childFields childConstructor)
                                       (ModelImpl parentFields parentConstructor)
-                                      { through ::
-                                        { model :: Model throughFields throughConstructor
-                                        , unique :: Boolean
-                                        }
+                                      { through :: String
                                       }
                                         { get :: EffFn3 (sequelize :: SEQUELIZE | eff)
                                                    (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
@@ -300,10 +297,7 @@ type ManyToManyResult eff parentFields childFields throughConstructor =
 belongsToMany :: forall eff fields childFields childConstructor parentFields parentConstructor throughFields throughConstructor
                . Model childFields childConstructor
               -> Model parentFields parentConstructor
-              -> { through ::
-                   { model :: Model throughFields throughConstructor
-                   , unique :: Boolean
-                   }
+              -> { through :: String
                  }
               -> Aff (sequelize :: SEQUELIZE | eff)
                    (ManyToManyResult (sequelize :: SEQUELIZE | eff) parentFields childFields throughConstructor)
