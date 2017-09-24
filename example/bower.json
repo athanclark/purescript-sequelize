@@ -9,7 +9,7 @@
   "dependencies": {
     "purescript-prelude": "^3.1.0",
     "purescript-console": "^3.0.0",
-    "purescript-sequelize": "../#7e9795fa8d9e1c57ac2ff55f40a4f2d2d4410c01"
+    "purescript-sequelize": "../#035808a8567cfdf893f9443e1bf4f68408e87fec"
   },
   "devDependencies": {
     "purescript-psci-support": "^3.0.0"
