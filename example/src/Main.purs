@@ -52,5 +52,5 @@ main = do
              $ emptyModelDefinition
     sync sql
     b <- create baz {}
-    x <- liftEff $ get i (SProxy :: SProxy "baz")
-    pure x
+    x <- liftEff $ get b {plain: true}
+    pure $ unsafeCoerce x
