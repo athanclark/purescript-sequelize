@@ -50,16 +50,7 @@ main = do
                 { "type": sqlSTRING
                 } "baz!"
              $ emptyModelDefinition
-    foo'sBazs <- baz `belongsToMany` foo
     sync sql
-    void $ create foo {foo: "ayy", ayy: encodeJson [1]}
     b <- create baz {}
-    mI <- findOne foo {where: {foo: "ayy"}}
-    case mI of
-      Nothing -> do
-        liftEff $ log "wut?!"
-        pure "wut"
-      Just i -> do
-        foo'sBazs.add i [b] {through: {}}
-        x <- liftEff $ get i {plain: true}
-        pure $ unsafeCoerce x
+    x <- liftEff $ get i (SProxy :: SProxy "baz")
+    pure x

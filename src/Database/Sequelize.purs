@@ -431,13 +431,15 @@ type WithId o =
   | o )
 
 foreign import getImpl :: forall eff fields t
-                        . EffFn2 (sequelize :: SEQUELIZE | eff)
-                            (Instance fields) String t
+                        . EffFn4 (sequelize :: SEQUELIZE | eff)
+                            (EffFn1 (sequelize :: SEQUELIZE | eff) Error Unit)
+                            (EffFn1 (sequelize :: SEQUELIZE | eff) t Unit)
+                            (Instance fields) String Unit
 
 get :: forall eff fields' fields t k
      . RowCons k t (WithId fields') (WithId fields)
     => IsSymbol k
     => Instance fields
     -> SProxy k
-    -> Eff (sequelize :: SEQUELIZE | eff) t
-get i p = runEffFn2 getImpl i (reflectSymbol p)
+    -> Aff (sequelize :: SEQUELIZE | eff) t
+get i p = makeAff \onError onSuccess -> runEffFn4 getImpl (mkEffFn1 onError) (mkEffFn1 onSuccess) i (reflectSymbol p)

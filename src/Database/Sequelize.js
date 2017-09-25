@@ -129,6 +129,6 @@ exports.destroyImpl = function destroyImpl (onError,onSuccess,value) {
   value.destroy().then(onSuccess).catch(onError);
 };
 
-exports.getImpl = function getImpl (value,getParams) {
-  return value.get(getParams);
+exports.getImpl = function getImpl (onError,onSuccess,value,key) {
+  return value.get(key).then(onSuccess).catch(onError);
 };
