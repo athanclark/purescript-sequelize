@@ -430,14 +430,12 @@ type WithId o =
   ( id :: Int
   | o )
 
-foreign import getImpl :: forall eff fields t
+foreign import getImpl :: forall eff fields
                         . EffFn2 (sequelize :: SEQUELIZE | eff)
-                            (Instance fields) {plain :: Boolean} t
+                            (Instance fields) {plain :: Boolean} { | fields }
 
-get :: forall eff fields' fields t k
-     . RowCons k t (WithId fields') (WithId fields)
-    => IsSymbol k
-    => Instance fields
+get :: forall eff fields
+     . Instance fields
     -> {plain :: Boolean}
-    -> Eff (sequelize :: SEQUELIZE | eff) t
+    -> Eff (sequelize :: SEQUELIZE | eff) { | fields }
 get = runEffFn2 getImpl
